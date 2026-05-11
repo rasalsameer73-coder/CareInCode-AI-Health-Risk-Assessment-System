@@ -1,19 +1,31 @@
+from typing import Optional
+
+
 def build_structured_response(
-    summary,
-    risk_indicators,
-    evidence,
-    doctor_questions,
-    next_steps,
-    confidence=0.75
+
+    summary: str,
+
+    risk_indicators: list,
+
+    evidence: list,
+
+    doctor_questions: list,
+
+    next_steps: list,
+
+    confidence: float = 0.75,
+
+    insights: Optional[list] = None
 ):
 
-    # SHORTEN SUMMARY
-    short_summary = summary.strip()
+    # =========================
+    # DEFAULTS
+    # =========================
 
-    if len(short_summary) > 220:
-        short_summary = short_summary[:220] + "..."
+    if insights is None:
 
-    # DEFAULT RISK
+        insights = []
+
     if not risk_indicators:
 
         risk_indicators = [
@@ -21,18 +33,16 @@ def build_structured_response(
                 "indicator": "General health observation",
                 "severity": "low",
                 "reason":
-                "No major abnormalities detected."
+                    "No major abnormalities detected."
             }
         ]
 
-    # DEFAULT EVIDENCE
     if not evidence:
 
         evidence = [
             "User-reported symptoms were analyzed."
         ]
 
-    # DEFAULT QUESTIONS
     if not doctor_questions:
 
         doctor_questions = [
@@ -40,7 +50,6 @@ def build_structured_response(
             "Are additional tests recommended?"
         ]
 
-    # DEFAULT NEXT STEPS
     if not next_steps:
 
         next_steps = [
@@ -48,8 +57,11 @@ def build_structured_response(
             "Seek medical attention if symptoms worsen"
         ]
 
-    # DETERMINE GLOBAL RISK
-    highest = "low"
+    # =========================
+    # DETERMINE RISK LEVEL
+    # =========================
+
+    risk_level = "low"
 
     for risk in risk_indicators:
 
@@ -59,38 +71,63 @@ def build_structured_response(
         )
 
         if severity == "high":
-            highest = "high"
+
+            risk_level = "high"
             break
 
         elif (
             severity == "moderate"
-            and highest != "high"
+            and risk_level != "high"
         ):
-            highest = "moderate"
+
+            risk_level = "moderate"
+
+    # =========================
+    # CLEAN SUMMARY
+    # =========================
+
+    summary = summary.replace(
+        "**",
+        ""
+    ).strip()
+
+    if len(summary) > 300:
+
+        summary = summary[:300] + "..."
+
+    # =========================
+    # FINAL RESPONSE
+    # =========================
 
     return {
 
-        "summary": short_summary,
+        "summary":
+            summary,
 
-        "risk_level": highest,
+        "risk_level":
+            risk_level,
 
-        "risk_indicators": risk_indicators,
+        "risk_indicators":
+            risk_indicators,
 
-        "evidence": evidence,
+        "insights":
+            insights,
+
+        "evidence":
+            evidence,
 
         "doctor_prep": {
 
-            "questions_for_doctor":
-            doctor_questions
+            "questions":
+                doctor_questions
         },
 
-        "next_steps": next_steps,
+        "next_steps":
+            next_steps,
+
+        "confidence":
+            confidence,
 
         "disclaimer":
-        (
-            "Educational information only. "
-            "Not a medical diagnosis."
-        ),
-
-        "confidence": confidence
+            "Educational information only. Not a medical diagnosis."
     }
