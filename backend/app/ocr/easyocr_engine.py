@@ -1,6 +1,7 @@
 import easyocr
 
-reader = easyocr.Reader(['en'])
+# Force EasyOCR to use CPU instead of CUDA/GPU
+reader = easyocr.Reader(['en'], gpu=False)
 
 
 def extract_text_from_image(image_path: str):
