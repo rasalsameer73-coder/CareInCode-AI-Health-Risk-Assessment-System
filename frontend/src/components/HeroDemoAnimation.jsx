@@ -199,10 +199,10 @@ const styles = {
     borderRadius: "50%",
   },
   topTitle: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 700,
-    letterSpacing: "0.08em",
-    color: "#6b5e45",
+    letterSpacing: "0.1em",
+    color: "#4d4030",
     textTransform: "uppercase",
   },
   content: {
@@ -218,11 +218,11 @@ const styles = {
     marginBottom: 10,
   },
   screenTag: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: 700,
-    letterSpacing: "0.08em",
+    letterSpacing: "0.1em",
     textTransform: "uppercase",
-    color: "#0d9e6e",
+    color: "#0b8f7e",
   },
   screenDivider: {
     width: 4,
@@ -231,13 +231,14 @@ const styles = {
     background: "#b8c5bd",
   },
   screenTime: {
-    fontSize: 10,
-    color: "#8ea197",
+    fontSize: 11,
+    color: "#5f7269",
   },
   screenTitle: {
-    fontSize: 16,
+    fontSize: 20,
+    fontWeight: 700,
     margin: "0 0 14px",
-    color: "#1a2e24",
+    color: "#13261e",
   },
   stack: {
     display: "grid",
@@ -254,12 +255,13 @@ const styles = {
     padding: "12px 14px",
   },
   rowLabel: {
-    fontSize: 12,
-    color: "#1a2e24",
+    fontSize: 15,
+    fontWeight: 500,
+    color: "#10231d",
   },
   rowMeta: {
-    fontSize: 10,
-    color: "#93a59c",
+    fontSize: 12,
+    color: "#667a72",
     marginTop: 2,
   },
   rowRight: {
@@ -268,12 +270,12 @@ const styles = {
     gap: 10,
   },
   rowValue: {
-    fontSize: 13,
-    color: "#1a2e24",
+    fontSize: 18,
+    color: "#0f2019",
   },
   rowBadge: (status) => ({
-    fontSize: 10,
-    padding: "3px 8px",
+    fontSize: 11,
+    padding: "5px 10px",
     borderRadius: 999,
     background: status === "Watch" ? "#fef3cd" : "#e6fffa",
     color: status === "Watch" ? "#8a6200" : "#0f766e",
@@ -292,14 +294,14 @@ const styles = {
     gap: 12,
   },
   reportValue: {
-    fontSize: 12,
-    color: "#1a2e24",
+    fontSize: 14,
+    color: "#11241d",
     fontWeight: 700,
   },
   reportNote: {
     margin: "8px 0 0",
-    fontSize: 11,
-    color: "#60756b",
+    fontSize: 12.5,
+    color: "#43584f",
     lineHeight: 1.5,
   },
   calendarStrip: {
@@ -313,8 +315,8 @@ const styles = {
     borderRadius: 12,
     padding: "10px 8px",
     textAlign: "center",
-    fontSize: 11,
-    color: active ? "#0f766e" : "#6d7b74",
+    fontSize: 12,
+    color: active ? "#0f766e" : "#4f625b",
     fontWeight: 700,
   }),
   questionCard: {
@@ -341,9 +343,9 @@ const styles = {
   },
   questionText: {
     margin: 0,
-    fontSize: 11.5,
+    fontSize: 12.5,
     lineHeight: 1.55,
-    color: "#365048",
+    color: "#243b34",
   },
   footerNote: {
     marginTop: 12,
@@ -351,9 +353,9 @@ const styles = {
     background: "rgba(20,184,166,0.08)",
     border: "1px solid rgba(20,184,166,0.16)",
     borderRadius: 12,
-    fontSize: 11,
+    fontSize: 12.5,
     lineHeight: 1.5,
-    color: "#2e6550",
+    color: "#1f5b48",
   },
   stepDots: {
     display: "flex",

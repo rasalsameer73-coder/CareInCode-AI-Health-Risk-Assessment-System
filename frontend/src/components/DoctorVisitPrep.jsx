@@ -16,11 +16,19 @@ const intensityLabels = {
 };
 
 function formatIsoDate(date) {
-  return date.toISOString().split("T")[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseLocalDate(dateValue) {
+  const [year, month, day] = dateValue.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
 
 function prettyDate(dateValue) {
-  return new Date(dateValue).toLocaleDateString("en-GB", {
+  return parseLocalDate(dateValue).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -28,7 +36,7 @@ function prettyDate(dateValue) {
 }
 
 function buildCalendarDays(selectedDate, symptoms) {
-  const selected = new Date(`${selectedDate}T00:00:00`);
+  const selected = parseLocalDate(selectedDate);
   const weekday = selected.getDay();
   const mondayOffset = weekday === 0 ? -6 : 1 - weekday;
   const start = new Date(selected);
@@ -57,7 +65,7 @@ function buildCalendarDays(selectedDate, symptoms) {
 }
 
 function createSummary({ medications, symptoms }) {
-  const sortedSymptoms = [...symptoms].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const sortedSymptoms = [...symptoms].sort((a, b) => a.date.localeCompare(b.date));
   const earliest = sortedSymptoms[0];
   const latest = sortedSymptoms[sortedSymptoms.length - 1];
   const averageIntensity = sortedSymptoms.length
@@ -194,7 +202,7 @@ export default function DoctorVisitPrep() {
   );
 
   const sortedSymptoms = useMemo(
-    () => [...symptoms].sort((a, b) => new Date(a.date) - new Date(b.date)),
+    () => [...symptoms].sort((a, b) => a.date.localeCompare(b.date)),
     [symptoms]
   );
 
@@ -223,8 +231,8 @@ export default function DoctorVisitPrep() {
 
     setError("");
     setSymptoms((current) =>
-      [...current, { id: `sym-${Date.now()}`, date: selectedDate, ...symptomDraft }].sort(
-        (a, b) => new Date(a.date) - new Date(b.date)
+      [...current, { id: `sym-${Date.now()}`, date: selectedDate, ...symptomDraft }].sort((a, b) =>
+        a.date.localeCompare(b.date)
       )
     );
     setSymptomDraft({
@@ -287,26 +295,39 @@ export default function DoctorVisitPrep() {
         <button onClick={() => navigate("/dashboard")} className="back-btn" type="button">
           {"<-"} Dashboard
         </button>
-        <div className="dv-header-grid">
-          <div>
+        <div className="profile-page-top">
+          <div className="profile-page-kicker-wrap">
             <span className="page-kicker">Profile 3</span>
-            <h1 className="dv-title">Doctor Visit Preparation</h1>
-            <p className="dv-desc">
-              Keep a clean list of medications, log symptoms by date, and let CareInCode shape it
-              into a doctor-ready summary before the appointment.
-            </p>
           </div>
-          <div className="dv-header-stat">
-            <span>Ready for consult</span>
-            <strong>{medications.length + symptoms.length} items tracked</strong>
+          <div className="profile-page-title-wrap">
+            <h1 className="dv-title profile-page-heading">Doctor Visit Preparation</h1>
+          </div>
+        </div>
+
+        <div className="profile-page-copy">
+          <p className="dv-desc">
+            Keep a clean list of medications, log symptoms by date, and let CareInCode shape it
+            into a doctor-ready summary before the appointment.
+          </p>
+        </div>
+
+        <div className="profile-meta-row">
+          <div className="dv-header-stat profile-meta-card">
+            <span className="meta-label">Visit status</span>
+            <strong>Ready for consult</strong>
             <p>Medication history and symptom progression stay together in one place.</p>
+          </div>
+          <div className="dv-header-stat profile-meta-card">
+            <span className="meta-label">Items tracked</span>
+            <strong>{medications.length + symptoms.length}</strong>
+            <p>Everything logged here can later feed the final doctor summary.</p>
           </div>
         </div>
       </motion.div>
 
       <div className="dv-shell dv-main-grid">
         <motion.section
-          className="dv-card"
+          className="dv-card dv-card-balanced"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08 }}
@@ -385,7 +406,7 @@ export default function DoctorVisitPrep() {
         </motion.section>
 
         <motion.section
-          className="dv-card"
+          className="dv-card dv-card-balanced"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.14 }}
@@ -393,7 +414,7 @@ export default function DoctorVisitPrep() {
           <div className="dv-card-head">
             <div>
               <p className="panel-kicker">Symptom logger</p>
-              <h2 className="panel-title">Pick a day and write what changed</h2>
+              <h2 className="panel-title dv-title-inline">Pick a day and write what changed</h2>
             </div>
             <p className="panel-note">
               This acts like a midway calendar: select a day, then note pain, aggravation, or new
@@ -550,7 +571,7 @@ export default function DoctorVisitPrep() {
             <h2 className="panel-title">Generate a clean summary for your doctor</h2>
           </div>
           <p className="panel-note">
-            The AI summary pulls your medications and symptom progression into one clearer story.
+            This summary pulls your medications and symptom progression into one clearer story.
           </p>
         </div>
 
@@ -569,7 +590,7 @@ export default function DoctorVisitPrep() {
                 Building summary...
               </>
             ) : (
-              "Generate AI Summary"
+              "Generate Summary"
             )}
           </motion.button>
           {summary ? (

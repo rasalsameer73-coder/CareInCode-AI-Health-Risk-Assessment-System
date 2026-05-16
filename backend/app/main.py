@@ -1,11 +1,15 @@
-from fastapi import FastAPI
+from pathlib import Path
 
-from app.api.routes import health
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 from app.api.routes import analysis
-from app.api.routes import upload
-from app.api.routes import export
 from app.api.routes import auth
+from app.api.routes import export
+from app.api.routes import health
 from app.api.routes import history
+from app.api.routes import upload
 from app.api.routes import vitals
 
 from app.core.config import settings
@@ -27,11 +31,6 @@ app.include_router(history.router)
 app.include_router(vitals.router)
 
 
-# Root endpoint
-@app.get("/")
-def root():
-
-    return {
-        "message": "CareInCode+ backend running",
-        "status": "ok"
-    }
+frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")

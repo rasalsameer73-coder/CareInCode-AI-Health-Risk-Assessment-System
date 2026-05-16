@@ -1,4 +1,4 @@
-/* ─── Hero Section ──────────────────────────────────────────────────────────── */
+/* —— Hero Section ————————————————————————————————————————————————————————————— */
 
 .hero-split {
   position: relative;
@@ -9,7 +9,7 @@
   background: #faf7f2;
 }
 
-/* ─── Left side: text content (unchanged) ───────────────────────────────────── */
+/* —— Left side: text content (unchanged) ————————————————————————————————————— */
 
 .hero-content {
   position: relative;
@@ -21,7 +21,7 @@
   padding: 80px 56px 80px 72px;
 }
 
-/* ─── Right side: animated demo container ───────────────────────────────────── */
+/* —— Right side: animated demo container ———————————————————————————————————— */
 
 .hero-bg {
   position: relative;
@@ -67,7 +67,7 @@
   z-index: 1;
 }
 
-/* ─── Responsive ─────────────────────────────────────────────────────────────── */
+/* —— Responsive ——————————————————————————————————————————————————————————— */
 
 @media (max-width: 1024px) {
   .hero {

@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const STORAGE_KEY = "uploadedReports";
 
@@ -49,11 +50,13 @@ function downloadSummaryFile(file, insight) {
 }
 
 export default function Report() {
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
   const [file, setFile] = useState(null);
   const [insight, setInsight] = useState("");
   const [loading, setLoading] = useState(false);
+  const [insightLoading, setInsightLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");
 
@@ -70,7 +73,7 @@ export default function Report() {
     setInsight("");
   };
 
-  const handleAnalyze = async () => {
+  const handleSaveUpload = async () => {
     if (!file) {
       setError("Please upload one report file first.");
       return;
@@ -81,17 +84,56 @@ export default function Report() {
       setError("");
       setInsight("");
 
-      setTimeout(() => {
-        const generatedSummary =
-          "AI insight generation is not connected yet. Uploaded reports can be collected here, but no automatic interpretation is being shown.";
-        setInsight(generatedSummary);
-        saveUploadedReport(file, generatedSummary);
-        setLoading(false);
-      }, 1200);
+      saveUploadedReport(file, "");
+      setLoading(false);
     } catch (err) {
       console.error(err);
-      setError("Could not generate AI insights right now.");
+      setError("Could not save this report right now.");
       setLoading(false);
+    }
+  };
+
+  const handleGenerateInsights = async () => {
+    if (!file) {
+      setError("Please upload one report file first.");
+      return;
+    }
+
+    try {
+      setInsightLoading(true);
+      setError("");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/upload/report", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        const message =
+          errorBody?.error || `Upload failed: ${response.statusText}`;
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+      const summary =
+        data.analysis?.summary ||
+        (data.analysis?.insights && data.analysis.insights.length > 0
+          ? data.analysis.insights.join("\n\n")
+          : null) ||
+        data.report_type ||
+        "Report analyzed successfully.";
+
+      setInsight(summary);
+      saveUploadedReport(file, summary);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Could not generate insights right now.");
+    } finally {
+      setInsightLoading(false);
     }
   };
 
@@ -123,33 +165,32 @@ export default function Report() {
       >
         <div className="feature-orbit orbit-left" aria-hidden="true" />
         <div className="feature-orbit orbit-right" aria-hidden="true" />
-        <div>
-          <h1 className="report-heading">Report Simplifier</h1>
-          <p className="report-desc">
-            Upload one medical report at a time. This screen currently stores
-            the selected file locally and reserves space for future analysis
-            without showing any fabricated report interpretation.
-          </p>
+        <button onClick={() => navigate("/dashboard")} className="back-btn" type="button">
+          {"<-"} Dashboard
+        </button>
 
-          <div className="report-tags">
-            <span className="report-chip">Single file upload</span>
-            <span className="report-chip">Medical-style summary</span>
-            <span className="report-chip">Saved for history view</span>
+        <div className="profile-page-top">
+          <div className="profile-page-kicker-wrap">
+            <span className="page-kicker">Profile 2</span>
+          </div>
+          <div className="profile-page-title-wrap">
+            <h1 className="report-heading profile-page-heading">Report Simplifier</h1>
           </div>
         </div>
 
-        <section className="report-side-card">
-          <div className="report-side-icon" aria-hidden="true">
-            []
-          </div>
-
-          <h2 className="report-side-title">Smarter report interpretation</h2>
-
-          <p className="report-side-text">
-            Report analysis is intentionally left blank until the actual
-            processing flow is connected.
+        <div className="profile-page-copy">
+          <p className="report-desc">
+            Upload one medical report at a time and keep its summary area ready in one place.
           </p>
-        </section>
+        </div>
+
+        <div className="profile-meta-row">
+          <section className="report-side-card profile-meta-card">
+            <span className="meta-label">Report support</span>
+            <strong>Single file upload</strong>
+            <p className="report-side-text">PDF, PNG, JPG, and JPEG are accepted here.</p>
+          </section>
+        </div>
       </motion.div>
 
       <div className="report-workspace">
@@ -173,8 +214,7 @@ export default function Report() {
                 <p className="upload-main-text">Click to select a report</p>
 
                 <p className="upload-helper-text">
-                  Upload one report file to register it here without any dummy
-                  AI insight output
+                  Upload one report file to register it here neatly.
                 </p>
 
                 {file && <div className="selected-file">{file.name}</div>}
@@ -192,10 +232,18 @@ export default function Report() {
                 <button
                   type="button"
                   className="btn-primary report-button"
-                  onClick={handleAnalyze}
+                  onClick={handleSaveUpload}
                   disabled={loading}
                 >
                   {loading ? "Saving upload..." : "Save Upload"}
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary report-button"
+                  onClick={handleGenerateInsights}
+                  disabled={insightLoading}
+                >
+                  {insightLoading ? "Generating..." : "Generate Insights"}
                 </button>
               </div>
 
@@ -217,16 +265,13 @@ export default function Report() {
                 </div>
 
                 <div>
-                  <h2 className="insight-title">AI Insight Summary</h2>
-                  <p className="insight-subtitle">
-                    No dummy interpretation is displayed on this screen
-                  </p>
+                  <h2 className="insight-title">Report Summary</h2>
+                  <p className="insight-subtitle">This area shows the summary for the uploaded report.</p>
                 </div>
               </div>
 
               <div className="insight-box upgraded">
-                {insight ||
-                  "No AI summary is being shown right now. This area will stay neutral until real report analysis is connected."}
+                {insightLoading ? "Generating insights..." : insight || "Nothing to show here yet."}
               </div>
 
               {insight && (

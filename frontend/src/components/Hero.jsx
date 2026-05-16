@@ -11,6 +11,7 @@ const fadeUp = (delay = 0) => ({
 
 function Hero({ lang }) {
   const t = text[lang]
+
   return (
     <section className="hero hero-split">
       <div className="hero-bg">
@@ -24,19 +25,15 @@ function Hero({ lang }) {
             <span>{t.heroTag}</span>
           </div>
         </motion.div>
-        <motion.h1 {...fadeUp(0.2)}>
-           {t.heroH1Part1}
-           <br />
-           <em>{t.heroH1Em}</em>
-           </motion.h1>
-        <motion.p className="hero-sub" {...fadeUp(0.3)}>{t.heroSub}</motion.p>
-        <motion.div className="hero-actions" {...fadeUp(0.4)}>
-          <button className="btn-primary">{t.heroCTA}</button>
-          <button className="btn-ghost" onClick={() => document.getElementById('demo').scrollIntoView({ behavior: 'smooth' })}>
-            <span className="play-icon">▶</span>
-            {t.heroSeeHow}
-          </button>
-        </motion.div>
+
+        <motion.h1 className="hero-title" {...fadeUp(0.2)}>
+          <span className="hero-title-main">{t.heroH1Part1}</span>
+          <span className="hero-title-accent">{t.heroH1Em}</span>
+        </motion.h1>
+
+        <motion.p className="hero-sub" {...fadeUp(0.3)}>
+          {t.heroSub}
+        </motion.p>
       </div>
     </section>
   )
