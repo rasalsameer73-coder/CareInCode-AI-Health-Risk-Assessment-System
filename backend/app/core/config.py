@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     )
 
     MONGO_URI: str = (
-        "mongodb://localhost:27017"
+        "MONGO_URI = mongodb+srv://jadhavdarshan259_db_user:Px1EsTz926RYefOe@cluster0.u039uiu.mongodb.net/?appName=Cluster0"
     )
 
     DATABASE_NAME: str = (
