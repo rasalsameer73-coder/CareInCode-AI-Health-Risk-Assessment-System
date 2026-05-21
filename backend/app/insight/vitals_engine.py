@@ -150,6 +150,11 @@ def analyze_vitals(
             "Physical activity appears lower than common recommendations."
         )
 
+    if not risks:
+        insights.append(
+            "All provided vital signs fall within healthy ranges."
+        )
+
     return {
 
         "risks":
