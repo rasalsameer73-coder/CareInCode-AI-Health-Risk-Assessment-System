@@ -3,6 +3,8 @@ from pydantic_settings import (
     SettingsConfigDict
 )
 
+from pymongo import MongoClient
+
 
 class Settings(BaseSettings):
 
@@ -15,9 +17,9 @@ class Settings(BaseSettings):
     )
 
     MONGO_URI: str = (
-        "MONGO_URI = mongodb+srv://jadhavdarshan259_db_user:Px1EsTz926RYefOe@cluster0.u039uiu.mongodb.net/?appName=Cluster0"
+        "mongodb+srv://jadhavdarshan259_db_user:Px1EsTz926RYefOe@cluster0.u039uiu.mongodb.net/?appName=Cluster0"
     )
-
+    
     DATABASE_NAME: str = (
         "careincode"
     )
@@ -37,3 +39,11 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+client = MongoClient(settings.MONGO_URI)
+
+try:
+    client.admin.command('ping')
+    print("MongoDB Connected Successfully")
+except Exception as e:
+    print("MongoDB Connection Failed:", e)

@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '127.0.0.1',
     proxy: {
       '/upload': {
         target: 'http://127.0.0.1:8000',
@@ -23,6 +24,10 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/export': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/doctor-visit-prep': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },

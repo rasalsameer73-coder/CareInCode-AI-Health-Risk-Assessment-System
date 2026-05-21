@@ -1,5 +1,4 @@
-from fastapi import APIRouter
-
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.services.user_service import (
@@ -18,9 +17,7 @@ router = APIRouter(
 
 
 class AuthRequest(BaseModel):
-
-    username: str
-
+    email: str
     password: str
 
 
@@ -28,46 +25,35 @@ class AuthRequest(BaseModel):
 async def register(
     data: AuthRequest
 ):
-
-    return register_user(
-        data.username,
+    result = register_user(
+        data.email,
         data.password
     )
+
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message"))
+
+    return result
 
 
 @router.post("/login")
 async def login(
     data: AuthRequest
 ):
-
     user = authenticate_user(
-        data.username,
+        data.email,
         data.password
     )
 
     if not user:
-
-        return {
-
-            "success": False,
-
-            "message":
-            "Invalid credentials"
-        }
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = create_access_token({
-
-        "sub":
-        user["username"]
+        "sub": user["email"]
     })
 
     return {
-
         "success": True,
-
-        "access_token":
-        token,
-
-        "token_type":
-        "bearer"
+        "access_token": token,
+        "token_type": "bearer"
     }

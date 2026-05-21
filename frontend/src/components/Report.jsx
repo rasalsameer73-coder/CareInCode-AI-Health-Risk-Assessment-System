@@ -1,6 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { uploadReport, getHistory, getCurrentUserEmail } from "../services/api";
 
 const STORAGE_KEY = "uploadedReports";
 
@@ -29,20 +30,62 @@ function saveUploadedReport(file, summary) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify([record, ...existing]));
 }
 
-function downloadSummaryFile(file, insight) {
-  const body = [
-    "CareInCode Report Upload",
+function downloadSummaryFile(file, analysis) {
+  const lines = [
+    "CareInCode Report Simplifier",
     "",
     `File: ${file?.name || "Uploaded report"}`,
+    `Report type: ${analysis?.report_type || "Unknown"}`,
     "",
-    insight,
-  ].join("\n");
+    `Summary: ${analysis?.summary || "No summary available."}`,
+    "",
+  ];
 
-  const blob = new Blob([body], { type: "text/plain;charset=utf-8" });
+  if (analysis?.risk_level) {
+    lines.push(`Risk level: ${analysis.risk_level}`);
+  }
+  if (analysis?.health_score !== undefined) {
+    lines.push(`Health score: ${analysis.health_score}`);
+  }
+  if (analysis?.risk_indicators?.length) {
+    lines.push("\nRisk indicators:");
+    analysis.risk_indicators.forEach((item) => {
+      lines.push(`- ${item.type}${item.severity ? ` (${item.severity})` : ""}`);
+    });
+  }
+  if (analysis?.evidence?.length) {
+    lines.push("\nEvidence:");
+    analysis.evidence.forEach((item) => {
+      lines.push(`- ${item}`);
+    });
+  }
+  if (analysis?.next_steps?.length) {
+    lines.push("\nNext steps:");
+    analysis.next_steps.forEach((item) => {
+      lines.push(`- ${item}`);
+    });
+  }
+  if (analysis?.doctor_prep?.questions?.length) {
+    lines.push("\nQuestions for doctor:");
+    analysis.doctor_prep.questions.forEach((item) => {
+      lines.push(`- ${item}`);
+    });
+  }
+  if (analysis?.insights?.length) {
+    lines.push("\nInsights:");
+    analysis.insights.forEach((item) => {
+      lines.push(`- ${item}`);
+    });
+  }
+
+  lines.push("\nDisclaimer: " + (analysis?.disclaimer || "Educational information only. Not a medical diagnosis."));
+  lines.push(`Confidence: ${analysis?.confidence ?? "N/A"}`);
+
+  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "ai-summary.txt";
+  link.download = "report-simplifier-summary.txt";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -55,6 +98,9 @@ export default function Report() {
 
   const [file, setFile] = useState(null);
   const [insight, setInsight] = useState("");
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [reportHistory, setReportHistory] = useState([]);
+  const [activePanel, setActivePanel] = useState("summary");
   const [loading, setLoading] = useState(false);
   const [insightLoading, setInsightLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -82,14 +128,34 @@ export default function Report() {
     try {
       setLoading(true);
       setError("");
-      setInsight("");
 
-      saveUploadedReport(file, "");
+      const data = await uploadReport(file, getCurrentUserEmail());
+      const summary =
+        data.analysis?.summary ||
+        (data.analysis?.insights && data.analysis.insights.length > 0
+          ? data.analysis.insights.join("\n\n")
+          : null) ||
+        data.report_type ||
+        "Report saved successfully.";
+
+      setInsight(summary);
+      setAnalysisResult(data.analysis || null);
+      saveUploadedReport(file, summary);
+      await loadHistory();
       setLoading(false);
     } catch (err) {
       console.error(err);
-      setError("Could not save this report right now.");
+      setError(err.message || "Could not save this report right now.");
       setLoading(false);
+    }
+  };
+
+  const loadHistory = async () => {
+    try {
+      const response = await getHistory(getCurrentUserEmail());
+      setReportHistory(response.records || []);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -103,22 +169,8 @@ export default function Report() {
       setInsightLoading(true);
       setError("");
 
-      const formData = new FormData();
-      formData.append("file", file);
+      const data = await uploadReport(file, getCurrentUserEmail());
 
-      const response = await fetch("/upload/report", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => null);
-        const message =
-          errorBody?.error || `Upload failed: ${response.statusText}`;
-        throw new Error(message);
-      }
-
-      const data = await response.json();
       const summary =
         data.analysis?.summary ||
         (data.analysis?.insights && data.analysis.insights.length > 0
@@ -128,7 +180,9 @@ export default function Report() {
         "Report analyzed successfully.";
 
       setInsight(summary);
+      setAnalysisResult(data.analysis || null);
       saveUploadedReport(file, summary);
+      await loadHistory();
     } catch (err) {
       console.error(err);
       setError(err.message || "Could not generate insights right now.");
@@ -138,7 +192,7 @@ export default function Report() {
   };
 
   const handleDownloadSummary = async () => {
-    if (!insight) {
+    if (!insight && !analysisResult) {
       setError("Generate insights first before downloading the summary.");
       return;
     }
@@ -146,7 +200,7 @@ export default function Report() {
     try {
       setDownloading(true);
       setError("");
-      downloadSummaryFile(file, insight);
+      downloadSummaryFile(file, analysisResult || { summary: insight });
     } catch (err) {
       console.error(err);
       setError("Could not download the summary.");
@@ -154,6 +208,10 @@ export default function Report() {
       setDownloading(false);
     }
   };
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
 
   return (
     <div className="report-page">
@@ -270,11 +328,127 @@ export default function Report() {
                 </div>
               </div>
 
-              <div className="insight-box upgraded">
-                {insightLoading ? "Generating insights..." : insight || "Nothing to show here yet."}
+              <div className="report-panel-tabs">
+                <button
+                  type="button"
+                  className={activePanel === "summary" ? "panel-tab active" : "panel-tab"}
+                  onClick={() => setActivePanel("summary")}
+                >
+                  Summary
+                </button>
+                <button
+                  type="button"
+                  className={activePanel === "history" ? "panel-tab active" : "panel-tab"}
+                  onClick={() => setActivePanel("history")}
+                >
+                  History
+                </button>
               </div>
 
-              {insight && (
+              <div className="insight-box upgraded">
+                {activePanel === "history" ? (
+                  reportHistory.length ? (
+                    <div className="history-list report-history-list">
+                      {reportHistory.map((record) => (
+                        <article key={record._id} className="history-record-card">
+                          <div className="history-record-header">
+                            <strong>{record.file_name || record.analysis?.report_type || "Saved report"}</strong>
+                            <span>{record.created_at ? new Date(record.created_at).toLocaleString() : "Unknown date"}</span>
+                          </div>
+                          <div className="history-record-values">
+                            <span>{record.analysis?.report_type || "Unknown type"}</span>
+                            <span>Confidence: {record.analysis?.confidence ?? "N/A"}</span>
+                          </div>
+                          <p>{record.analysis?.summary || record.analysis?.insights?.[0] || "No summary available."}</p>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="history-empty">
+                      No saved reports yet. Upload a report to store its history.
+                    </div>
+                  )
+                ) : insightLoading ? (
+                  "Generating insights..."
+                ) : analysisResult ? (
+                  <div className="report-summary-details">
+                    <div className="report-summary-row">
+                      <strong>Report type</strong>
+                      <span>{analysisResult.report_type || "Unknown"}</span>
+                    </div>
+                    <div className="report-summary-row">
+                      <strong>Risk level</strong>
+                      <span>{analysisResult.risk_level || "N/A"}</span>
+                    </div>
+                    <div className="report-summary-row">
+                      <strong>Health score</strong>
+                      <span>{analysisResult.health_score ?? "N/A"}</span>
+                    </div>
+                    <div className="report-summary-row">
+                      <strong>Summary</strong>
+                      <p>{analysisResult.summary || insight}</p>
+                    </div>
+                    {analysisResult.risk_indicators?.length ? (
+                      <div className="report-summary-row report-summary-list">
+                        <strong>Risk indicators</strong>
+                        <ul>
+                          {analysisResult.risk_indicators.map((item, idx) => (
+                            <li key={idx}>{`${item.type}${item.severity ? ` (${item.severity})` : ""}`}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {analysisResult.evidence?.length ? (
+                      <div className="report-summary-row report-summary-list">
+                        <strong>Evidence</strong>
+                        <ul>
+                          {analysisResult.evidence.map((item, idx) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {analysisResult.next_steps?.length ? (
+                      <div className="report-summary-row report-summary-list">
+                        <strong>Next steps</strong>
+                        <ul>
+                          {analysisResult.next_steps.map((item, idx) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {analysisResult.doctor_prep?.questions?.length ? (
+                      <div className="report-summary-row report-summary-list">
+                        <strong>Questions for doctor</strong>
+                        <ul>
+                          {analysisResult.doctor_prep.questions.map((item, idx) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {analysisResult.insights?.length ? (
+                      <div className="report-summary-row report-summary-list">
+                        <strong>Insights</strong>
+                        <ul>
+                          {analysisResult.insights.map((item, idx) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    <div className="report-summary-row">
+                      <p>{analysisResult.disclaimer}</p>
+                      <span>Confidence: {analysisResult.confidence ?? "N/A"}</span>
+                    </div>
+                  </div>
+                ) : (
+                  insight || "Nothing to show here yet."
+                )}
+              </div>
+
+              {(analysisResult || insight) && (
                 <div className="report-actions">
                   <button
                     type="button"
@@ -282,7 +456,7 @@ export default function Report() {
                     onClick={handleDownloadSummary}
                     disabled={downloading}
                   >
-                    {downloading ? "Preparing file..." : "Download Note"}
+                    {downloading ? "Preparing file..." : "Download Report"}
                   </button>
                 </div>
               )}

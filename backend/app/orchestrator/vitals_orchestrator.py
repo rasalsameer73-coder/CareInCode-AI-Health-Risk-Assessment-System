@@ -23,12 +23,18 @@ def process_vitals(
     vitals_data: dict
 ):
 
+    cleaned_vitals_data = {
+        key: value
+        for key, value in vitals_data.items()
+        if value is not None
+    }
+
     # =========================
     # ANALYZE VITALS
     # =========================
 
     analysis = analyze_vitals(
-        vitals_data
+        cleaned_vitals_data
     )
 
     risks = analysis["risks"]

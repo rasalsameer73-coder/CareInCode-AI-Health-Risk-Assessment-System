@@ -8,17 +8,28 @@ from app.orchestrator.vitals_orchestrator import (
     process_vitals
 )
 
+from app.services.vitals_history_service import (
+    save_vitals_history
+)
+
 router = APIRouter(
+    prefix="/vitals",
+    tags=["Vitals Analysis"]
+)
+
+analysis_router = APIRouter(
     prefix="/analysis",
     tags=["Vitals Analysis"]
 )
 
 
-@router.post("/vitals")
+@router.post("/")
+@analysis_router.post("/vitals")
 async def analyze_vitals_route(
-    data: VitalsInput
+    data: VitalsInput,
+    user_id: str = "demo_user"
 ):
-
-    return process_vitals(
-        data.model_dump()
-    )
+    vitals_data = data.model_dump()
+    analysis = process_vitals(vitals_data)
+    save_vitals_history(user_id, vitals_data, analysis)
+    return analysis

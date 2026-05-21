@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { register } from "../services/api";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ export default function Signup() {
     return err;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const e = validate();
 
     if (Object.keys(e).length) {
@@ -44,8 +45,14 @@ export default function Signup() {
       return;
     }
 
-    alert("Signup successful!");
-    navigate("/dashboard");
+    try {
+      const result = await register({ email: form.email, password: form.password });
+      if (result.success) {
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      setErrors({ form: err.message || "Signup failed" });
+    }
   };
 
   return (
@@ -129,6 +136,7 @@ export default function Signup() {
         <button className="btn-primary login-btn" onClick={handleSubmit}>
           Get Started
         </button>
+        {errors.form && <p className="error">{errors.form}</p>}
       </motion.div>
     </div>
   );

@@ -6,13 +6,9 @@ from app.services.validation_service import validate_file
 
 from app.services.upload_service import save_uploaded_file
 
-from app.services.memory_service import (
-    save_health_record,
-    get_user_history
-)
-
 from app.services.health_record_service import (
-    save_health_record_db
+    save_health_record_db,
+    get_user_records
 )
 
 from app.services.analysis_storage_service import (
@@ -216,7 +212,8 @@ router = APIRouter(
 
 @router.post("/report")
 async def upload_report(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    user_id: str = "demo_user"
 ):
 
     # =========================
@@ -314,9 +311,7 @@ async def upload_report(
     # USER HISTORY
     # =========================
 
-    user_id = "demo_user"
-
-    history = get_user_history(
+    history = get_user_records(
         user_id
     )
 
@@ -923,23 +918,6 @@ async def upload_report(
             "Consult a healthcare professional if symptoms worsen"
         ]
 
-    save_health_record(
-
-        user_id,
-
-        {
-
-            "report_type":
-                report_type,
-
-            "biomarkers":
-                biomarkers,
-
-            "metrics":
-                metrics
-        }
-    )
-
     trend_analysis = analyze_trends(
         history
     )
@@ -982,12 +960,10 @@ async def upload_report(
     )
 
     save_health_record_db(
-
         user_id=user_id,
-
         report_text=extracted_text,
-
-        analysis=analysis
+        analysis=analysis,
+        file_name=file.filename,
     )
 
     return {
@@ -1004,7 +980,7 @@ async def upload_report(
         "ocr":
             extracted,
 
-        "analysis":
+            "analysis":
             analysis,
 
         "trend_analysis":
