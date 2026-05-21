@@ -1,6 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import {
+  loadDoctorVisitPrep as loadDoctorVisitPrepService,
+  saveDoctorVisitPrep,
+  getDoctorVisitPrepHistory,
+  getCurrentUserEmail,
+} from "../services/api";
 
 const intensityLabels = {
   1: "Very mild",
@@ -64,98 +70,10 @@ function buildCalendarDays(selectedDate, symptoms) {
   });
 }
 
-function createSummary({ medications, symptoms }) {
-  const sortedSymptoms = [...symptoms].sort((a, b) => a.date.localeCompare(b.date));
-  const earliest = sortedSymptoms[0];
-  const latest = sortedSymptoms[sortedSymptoms.length - 1];
-  const averageIntensity = sortedSymptoms.length
-    ? Math.round(
-        sortedSymptoms.reduce((sum, entry) => sum + Number(entry.intensity || 0), 0) /
-          sortedSymptoms.length
-      )
-    : 0;
-
-  const symptomNarrative = sortedSymptoms.length
-    ? sortedSymptoms
-        .map((entry) => {
-          const parts = [
-            `${prettyDate(entry.date)}: ${entry.location || "General discomfort"}`,
-            `intensity ${entry.intensity}/10`,
-          ];
-          if (entry.triggers) {
-            parts.push(`triggers noted: ${entry.triggers}`);
-          }
-          parts.push(entry.notes);
-          return parts.join(" - ");
-        })
-        .join("\n")
-    : "No symptom entries added yet.";
-
-  const questions = [];
-  if (sortedSymptoms.length) {
-    questions.push(
-      `How do the symptom changes between ${prettyDate(earliest.date)} and ${prettyDate(
-        latest.date
-      )} affect what you think is going on?`
-    );
-  }
-  if (medications.length) {
-    questions.push("Could any of my current medications be affecting these symptoms or masking them?");
-  }
-  if (averageIntensity >= 6) {
-    questions.push("What should I do if this pain returns at the same or higher intensity before my next visit?");
-  } else {
-    questions.push("What patterns should I keep tracking at home before the next appointment?");
-  }
-  questions.push("Are there tests, scans, or lifestyle changes I should prioritize first?");
-
-  return {
-    headline:
-      sortedSymptoms.length > 0
-        ? "A symptom timeline has been prepared with medication context for your consultation."
-        : "A medication snapshot has been prepared for your consultation.",
-    facts: [
-      `${medications.length} medication${medications.length === 1 ? "" : "s"} listed`,
-      `${sortedSymptoms.length} symptom log${sortedSymptoms.length === 1 ? "" : "s"} recorded`,
-      sortedSymptoms.length
-        ? `Average symptom intensity: ${averageIntensity}/10`
-        : "No symptom intensity trend yet",
-    ],
-    summaryText: [
-      "Doctor Visit Preparation Summary",
-      "",
-      `Generated on: ${new Date().toLocaleDateString("en-GB", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })}`,
-      "",
-      "Current medications:",
-      medications.length
-        ? medications
-            .map(
-              (med, index) =>
-                `${index + 1}. ${med.name}${med.dosage ? ` - ${med.dosage}` : ""}${
-                  med.reason ? ` | for ${med.reason}` : ""
-                }`
-            )
-            .join("\n")
-        : "None added",
-      "",
-      "Symptom timeline:",
-      symptomNarrative,
-      "",
-      "Suggested discussion points:",
-      questions.map((question, index) => `${index + 1}. ${question}`).join("\n"),
-    ].join("\n"),
-    questions,
-  };
-}
-
 export default function DoctorVisitPrep() {
   const navigate = useNavigate();
   const today = formatIsoDate(new Date());
+  const USER_ID = getCurrentUserEmail();
 
   const [medications, setMedications] = useState([
     {
@@ -188,7 +106,11 @@ export default function DoctorVisitPrep() {
     notes: "",
   });
   const [summary, setSummary] = useState(null);
+  const [historyRecords, setHistoryRecords] = useState([]);
+  const [activePanel, setActivePanel] = useState("details");
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedMessage, setSavedMessage] = useState("");
   const [error, setError] = useState("");
 
   const calendarDays = useMemo(
@@ -200,6 +122,20 @@ export default function DoctorVisitPrep() {
     () => symptoms.filter((entry) => entry.date === selectedDate),
     [selectedDate, symptoms]
   );
+
+  useEffect(() => {
+    loadDoctorVisitPrep(USER_ID);
+    loadDoctorVisitPrepHistory();
+  }, [USER_ID]);
+
+  const loadDoctorVisitPrepHistory = async () => {
+    try {
+      const response = await getDoctorVisitPrepHistory(USER_ID);
+      setHistoryRecords(response.records || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const sortedSymptoms = useMemo(
     () => [...symptoms].sort((a, b) => a.date.localeCompare(b.date)),
@@ -213,14 +149,18 @@ export default function DoctorVisitPrep() {
     }
 
     setError("");
-    setMedications((current) => [
-      ...current,
+
+    const nextMedications = [
+      ...medications,
       {
         id: `med-${Date.now()}`,
         ...medicationDraft,
       },
-    ]);
+    ];
+
+    setMedications(nextMedications);
     setMedicationDraft({ name: "", dosage: "", reason: "" });
+    syncDoctorVisitData(nextMedications, symptoms);
   };
 
   const addSymptom = () => {
@@ -230,28 +170,67 @@ export default function DoctorVisitPrep() {
     }
 
     setError("");
-    setSymptoms((current) =>
-      [...current, { id: `sym-${Date.now()}`, date: selectedDate, ...symptomDraft }].sort((a, b) =>
-        a.date.localeCompare(b.date)
-      )
+
+    const nextSymptoms = [...symptoms, { id: `sym-${Date.now()}`, date: selectedDate, ...symptomDraft }].sort(
+      (a, b) => a.date.localeCompare(b.date)
     );
+
+    setSymptoms(nextSymptoms);
     setSymptomDraft({
       location: "",
       intensity: 5,
       triggers: "",
       notes: "",
     });
+    syncDoctorVisitData(medications, nextSymptoms);
   };
 
   const removeMedication = (id) => {
-    setMedications((current) => current.filter((item) => item.id !== id));
+    const nextMedications = medications.filter((item) => item.id !== id);
+    setMedications(nextMedications);
+    syncDoctorVisitData(nextMedications, symptoms);
   };
 
   const removeSymptom = (id) => {
-    setSymptoms((current) => current.filter((item) => item.id !== id));
+    const nextSymptoms = symptoms.filter((item) => item.id !== id);
+    setSymptoms(nextSymptoms);
+    syncDoctorVisitData(medications, nextSymptoms);
   };
 
-  const generateSummary = () => {
+  async function syncDoctorVisitData(nextMedications, nextSymptoms) {
+    setSaving(true);
+    setSavedMessage("");
+
+    try {
+      const savedRecord = await saveDoctorVisitPrep({
+        user_id: USER_ID,
+        medications: nextMedications,
+        symptoms: nextSymptoms,
+      });
+      setSummary(savedRecord.summary || null);
+      setSavedMessage("Saved to backend");
+      window.setTimeout(() => setSavedMessage(""), 2500);
+      await loadDoctorVisitPrepHistory();
+    } catch (err) {
+      console.error(err);
+      setSavedMessage("Unable to save right now.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  async function loadDoctorVisitPrep() {
+    try {
+      const data = await loadDoctorVisitPrepService(USER_ID);
+      setMedications(data.medications || []);
+      setSymptoms(data.symptoms || []);
+      setSummary(data.summary || null);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  const generateSummary = async () => {
     if (!medications.length && !symptoms.length) {
       setError("Add medication or symptom details before generating the summary.");
       return;
@@ -260,10 +239,22 @@ export default function DoctorVisitPrep() {
     setError("");
     setLoading(true);
 
-    window.setTimeout(() => {
-      setSummary(createSummary({ medications, symptoms }));
+    try {
+      const savedRecord = await saveDoctorVisitPrep({
+        user_id: USER_ID,
+        medications,
+        symptoms,
+      });
+      setSummary(savedRecord.summary || null);
+      setSavedMessage("Summary generated and saved by backend");
+      window.setTimeout(() => setSavedMessage(""), 2500);
+      await loadDoctorVisitPrepHistory();
+    } catch (err) {
+      console.error(err);
+      setSavedMessage("Unable to generate summary right now.");
+    } finally {
       setLoading(false);
-    }, 900);
+    }
   };
 
   const downloadSummary = () => {
@@ -323,11 +314,29 @@ export default function DoctorVisitPrep() {
             <p>Everything logged here can later feed the final doctor summary.</p>
           </div>
         </div>
+        <div className="profile-page-tabs">
+          <button
+            type="button"
+            className={activePanel === "details" ? "panel-tab active" : "panel-tab"}
+            onClick={() => setActivePanel("details")}
+          >
+            Prep details
+          </button>
+          <button
+            type="button"
+            className={activePanel === "history" ? "panel-tab active" : "panel-tab"}
+            onClick={() => setActivePanel("history")}
+          >
+            Saved history
+          </button>
+        </div>
       </motion.div>
 
-      <div className="dv-shell dv-main-grid">
-        <motion.section
-          className="dv-card dv-card-balanced"
+      {activePanel === "details" ? (
+        <>
+          <div className="dv-shell dv-main-grid">
+            <motion.section
+              className="dv-card dv-card-balanced"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08 }}
@@ -593,12 +602,22 @@ export default function DoctorVisitPrep() {
               "Generate Summary"
             )}
           </motion.button>
+          <button
+            type="button"
+            className="btn-new-summary"
+            onClick={() => syncDoctorVisitData(medications, symptoms, summary)}
+            disabled={saving}
+          >
+            {saving ? "Saving progress..." : "Save progress"}
+          </button>
           {summary ? (
             <button type="button" className="btn-new-summary" onClick={downloadSummary}>
               Download summary
             </button>
           ) : null}
         </div>
+
+        {savedMessage ? <p className="reflection-note">{saving ? "Saving..." : savedMessage}</p> : null}
 
         {error ? <p className="reflection-error">{error}</p> : null}
 
@@ -685,6 +704,49 @@ export default function DoctorVisitPrep() {
           )}
         </div>
       </motion.section>
+    </>
+      ) : (
+        <motion.section
+          className="dv-shell dv-summary-card"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.14 }}
+        >
+          <div className="dv-card-head">
+            <div>
+              <p className="panel-kicker">Saved history</p>
+              <h2 className="panel-title">Past doctor prep entries</h2>
+            </div>
+            <p className="panel-note">
+              Review previous doctor visit preparation records for this profile.
+            </p>
+          </div>
+
+          <div className="history-list">
+            {historyRecords.length ? (
+              historyRecords.map((record) => (
+                <article key={record._id} className="history-record-card">
+                  <div className="history-record-header">
+                    <strong>{record.summary?.headline || "Saved preparation"}</strong>
+                    <span>{record.created_at ? new Date(record.created_at).toLocaleString() : "Unknown date"}</span>
+                  </div>
+                  <div className="history-record-values">
+                    <span>Medications: {record.medications?.length ?? 0}</span>
+                    <span>Symptom logs: {record.symptoms?.length ?? 0}</span>
+                  </div>
+                  <div className="history-record-footer">
+                    <p>{record.summary?.summaryText?.split("\n")[0] || "No summary text available."}</p>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="history-empty">
+                No saved doctor visit prep history yet. Save your progress and return to see it here.
+              </div>
+            )}
+          </div>
+        </motion.section>
+      )}
     </div>
   );
 }
