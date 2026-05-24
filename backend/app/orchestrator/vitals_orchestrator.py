@@ -23,12 +23,18 @@ def process_vitals(
     vitals_data: dict
 ):
 
+    cleaned_vitals_data = {
+        key: value
+        for key, value in vitals_data.items()
+        if value is not None
+    }
+
     # =========================
     # ANALYZE VITALS
     # =========================
 
     analysis = analyze_vitals(
-        vitals_data
+        cleaned_vitals_data
     )
 
     risks = analysis["risks"]
@@ -42,6 +48,11 @@ def process_vitals(
     evidence = get_vitals_evidence(
         risks
     )
+
+    if not evidence:
+        evidence = [
+            "Provided vital sign values fall within normal healthy ranges."
+        ]
 
     # =========================
     # DOCTOR PREP
@@ -114,10 +125,15 @@ def process_vitals(
     # SUMMARY
     # =========================
 
-    summary = (
-        "Vital signs were analyzed for "
-        "potential health pattern changes."
-    )
+    if not risks:
+        summary = (
+            "All provided vital signs are healthy and within expected ranges."
+        )
+    else:
+        summary = (
+            "Vital signs were analyzed for "
+            "potential health pattern changes."
+        )
 
     # =========================
     # BUILD STRUCTURED RESPONSE

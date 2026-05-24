@@ -41,4 +41,5 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.sw?server_output.txt 
+backend/.venv/ 

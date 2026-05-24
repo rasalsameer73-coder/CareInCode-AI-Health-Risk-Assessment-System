@@ -1,54 +1,81 @@
+from datetime import datetime
+
+import app.core.database as database
 from app.core.security import (
     hash_password,
     verify_password
 )
+from pymongo.errors import PyMongoError
 
-users_db = {}
+
+db = database.get_database()
+collection = db.users
+memory_users = {}
 
 
 def register_user(
-    username: str,
+    email: str,
     password: str
 ):
-
-    if username in users_db:
-
+    if not email or not password:
         return {
             "success": False,
-            "message":
-            "User already exists"
+            "message": "Email and password are required"
         }
 
-    users_db[username] = {
+    try:
+        existing = collection.find_one({"email": email})
+        if existing:
+            return {
+                "success": False,
+                "message": "User already exists"
+            }
 
-        "username":
-        username,
+        collection.insert_one({
+            "email": email,
+            "password": hash_password(password),
+            "created_at": datetime.utcnow()
+        })
 
-        "password":
-        hash_password(password)
-    }
+        return {
+            "success": True
+        }
+    except PyMongoError:
+        if email in memory_users:
+            return {
+                "success": False,
+                "message": "User already exists"
+            }
 
-    return {
-        "success": True
-    }
+        memory_users[email] = {
+            "email": email,
+            "password": hash_password(password),
+            "created_at": datetime.utcnow()
+        }
+
+        return {
+            "success": True
+        }
 
 
 def authenticate_user(
-    username: str,
+    email: str,
     password: str
 ):
-
-    user = users_db.get(username)
+    try:
+        user = collection.find_one({"email": email})
+    except PyMongoError:
+        user = memory_users.get(email)
 
     if not user:
-
         return None
 
     if not verify_password(
         password,
         user["password"]
     ):
-
         return None
 
-    return user
+    return {
+        "email": user["email"]
+    }

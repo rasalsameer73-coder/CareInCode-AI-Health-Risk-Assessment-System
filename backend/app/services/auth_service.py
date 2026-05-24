@@ -1,4 +1,4 @@
-from app.models.user_model import fake_users_db
+from backend.app.models.user_model import fake_users_db
 from app.security.hash import hash_password, verify_password
 from app.security.jwt_handler import create_access_token
 

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { login } from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function Login() {
     return err;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const e = validate();
 
     if (Object.keys(e).length) {
@@ -36,8 +37,14 @@ export default function Login() {
       return;
     }
 
-    alert("Login successful!");
-    navigate("/dashboard");
+    try {
+      const result = await login({ email: form.email, password: form.password });
+      if (result.success) {
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      setErrors({ form: err.message || "Login failed" });
+    }
   };
 
   return (
@@ -78,6 +85,7 @@ export default function Login() {
         <button className="btn-primary login-btn" onClick={handleSubmit}>
           Login
         </button>
+        {errors.form && <p className="error">{errors.form}</p>}
 
         <p className="switch-auth">
           New here?{" "}
