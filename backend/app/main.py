@@ -15,29 +15,52 @@ from app.api.routes import vitals
 
 from app.core.config import settings
 
-# IMPORT THIS
 from app.services.memory_service import (
     get_user_history
 )
 
+# =========================
+# INITIALIZE FASTAPI APP
+# =========================
 
-# Initialize FastAPI app
 app = FastAPI(
     title=settings.APP_NAME
 )
 
+# =========================
+# CORS
+# =========================
 
-# Register routers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# =========================
+# REGISTER ROUTERS
+# =========================
+
 app.include_router(health.router)
-app.include_router(analysis.router)
-app.include_router(upload.router)
-app.include_router(export.router)
-app.include_router(auth.router)
-app.include_router(history.router)
-app.include_router(doctor_visit.router)
-app.include_router(vitals.router)
-app.include_router(vitals.analysis_router)
 
+app.include_router(analysis.router)
+
+app.include_router(upload.router)
+
+app.include_router(export.router)
+
+app.include_router(auth.router)
+
+app.include_router(history.router)
+
+# DOCTOR VISIT ROUTER
+app.include_router(doctor_visit.router)
+
+app.include_router(vitals.router)
+
+app.include_router(vitals.analysis_router)
 
 # =========================
 # TEMP DB TEST ROUTE
@@ -50,6 +73,24 @@ async def check_db():
 
     return data
 
+# =========================
+# MONGO TEST ROUTE
+# =========================
+
+@app.get("/mongo-test")
+async def mongo_test():
+
+    from app.core.database import get_database
+
+    db = get_database()
+
+    db.test.insert_one({
+        "status": "working"
+    })
+
+    return {
+        "message": "MongoDB working"
+    }
 
 # =========================
 # FRONTEND STATIC FILES
