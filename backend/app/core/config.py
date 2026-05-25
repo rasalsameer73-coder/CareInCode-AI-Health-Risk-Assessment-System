@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import (
     BaseSettings,
     SettingsConfigDict
@@ -16,8 +17,9 @@ class Settings(BaseSettings):
         "models/gemini-2.5-flash"
     )
 
-    MONGO_URI: str = (
-        "mongodb+srv://jadhavdarshan259_db_user:Px1EsTz926RYefOe@cluster0.u039uiu.mongodb.net/?appName=Cluster0"
+    MONGO_URI: str = Field(
+        default="mongodb://localhost:27017",
+        env=("MONGO_URI", "MONGODB_URI")
     )
     
     DATABASE_NAME: str = (

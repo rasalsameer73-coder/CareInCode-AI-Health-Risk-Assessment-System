@@ -118,14 +118,18 @@ def export_pdf(
         )
     )
 
+    summary_text = data.get(
+        "summary",
+        "No summary available."
+    )
+    if isinstance(summary_text, str):
+        summary_text = summary_text.replace("\n", "<br/>")
+
     elements.append(
 
         Paragraph(
 
-            data.get(
-                "summary",
-                "No summary available."
-            ),
+            summary_text,
 
             styles["BodyText"]
         )

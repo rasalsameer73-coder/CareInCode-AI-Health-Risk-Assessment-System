@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { postVitals, getVitalsHistory, getCurrentUserEmail } from "../services/api";
+import { postVitals, getVitalsHistory, getCurrentUserEmail, downloadPdf } from "../services/api";
 
 const INITIAL_VITALS = {
   spO2: "",
@@ -135,62 +135,28 @@ export default function HealthReflection() {
     loadVitalsHistory();
   }, []);
 
-  const downloadReport = () => {
+  const downloadReport = async () => {
     if (!analysisResult) {
       return;
     }
 
-    const lines = [];
-    lines.push("CareInCode Health Reflection Report");
-    lines.push("");
-    lines.push(`Summary: ${analysisResult.summary || "No summary available."}`);
-    lines.push(`Risk Level: ${analysisResult.risk_level || "Unknown"}`);
-    lines.push("");
-
-    if (analysisResult.risk_indicators?.length) {
-      lines.push("Risk Indicators:");
-      analysisResult.risk_indicators.forEach((item) => {
-        lines.push(`- ${item.type} (${item.severity || "unknown"})`);
+    try {
+      const blob = await downloadPdf("/export/vitals/pdf", {
+        method: "POST",
       });
-      lines.push("");
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "vitals-report.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Could not download the report.");
     }
-
-    if (analysisResult.evidence?.length) {
-      lines.push("Evidence:");
-      analysisResult.evidence.forEach((item) => {
-        lines.push(`- ${item}`);
-      });
-      lines.push("");
-    }
-
-    if (analysisResult.next_steps?.length) {
-      lines.push("Next Steps:");
-      analysisResult.next_steps.forEach((item) => {
-        lines.push(`- ${item}`);
-      });
-      lines.push("");
-    }
-
-    if (analysisResult.doctor_prep?.questions?.length) {
-      lines.push("Questions For Doctor:");
-      analysisResult.doctor_prep.questions.forEach((item) => {
-        lines.push(`- ${item}`);
-      });
-      lines.push("");
-    }
-
-    lines.push(`Disclaimer: ${analysisResult.disclaimer || "Educational information only."}`);
-    lines.push(`Confidence: ${analysisResult.confidence ?? "N/A"}`);
-
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "vitals-reflection-report.txt";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   const resetForm = () => {

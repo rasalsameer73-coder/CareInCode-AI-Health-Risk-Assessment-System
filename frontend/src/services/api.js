@@ -36,6 +36,7 @@ async function request(path, options = {}) {
       ...requestOptions.headers,
       "Content-Type": "application/json",
     };
+    requestOptions.body = JSON.stringify(body);
   }
 
   const response = await fetch(`${API_PREFIX}${path}`, requestOptions);
@@ -55,17 +56,53 @@ async function request(path, options = {}) {
   return data;
 }
 
+export async function downloadPdf(path, options = {}) {
+  const headers = {
+    ...getAuthHeaders(),
+    ...(options.headers || {}),
+  };
+
+  const requestOptions = {
+    method: options.method || "GET",
+    headers,
+  };
+
+  if (options.body) {
+    requestOptions.body = options.body;
+    if (!(options.body instanceof FormData) && !headers["Content-Type"]) {
+      requestOptions.headers = {
+        ...requestOptions.headers,
+        "Content-Type": "application/json",
+      };
+      requestOptions.body = JSON.stringify(options.body);
+    }
+  }
+
+  const response = await fetch(`${API_PREFIX}${path}`, requestOptions);
+  if (!response.ok) {
+    const contentType = response.headers.get("Content-Type") || "";
+    if (contentType.includes("application/json")) {
+      const errorData = await response.json();
+      const message = errorData?.detail || errorData?.error || response.statusText || "API request failed";
+      throw new Error(message);
+    }
+    throw new Error(response.statusText || "API request failed");
+  }
+
+  return response.blob();
+}
+
 export async function register({ email, password }) {
   return request("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: { email, password },
   });
 }
 
 export async function login({ email, password }) {
   const data = await request("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: { email, password },
   });
   if (data?.success && data?.access_token) {
     localStorage.setItem("access_token", data.access_token);
@@ -87,7 +124,7 @@ export async function postVitals(vitals, userId) {
   const query = userId ? `?user_id=${encodeURIComponent(userId)}` : "";
   return request(`/analysis/vitals${query}`, {
     method: "POST",
-    body: JSON.stringify(vitals),
+    body: vitals,
   });
 }
 
@@ -115,16 +152,23 @@ export async function saveDoctorVisitPrep(payload) {
   const id = payload.user_id || getCurrentUserEmail();
   return request("/doctor-visit-prep", {
     method: "POST",
-    body: JSON.stringify({
+    body: {
       ...payload,
       user_id: id,
-    }),
+    },
   });
 }
 
 export async function getDoctorVisitPrepHistory(userId) {
   const id = userId || getCurrentUserEmail();
   return request(`/doctor-visit-prep/history/${encodeURIComponent(id)}`);
+}
+
+export async function downloadDoctorVisitSummaryPdf(userId) {
+  const id = userId || getCurrentUserEmail();
+  return downloadPdf(`/export/doctor-visit-summary/pdf?user_id=${encodeURIComponent(id)}`, {
+    method: "POST",
+  });
 }
 
 export async function getHistory(userId) {

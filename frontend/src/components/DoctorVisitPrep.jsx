@@ -5,6 +5,7 @@ import {
   loadDoctorVisitPrep as loadDoctorVisitPrepService,
   saveDoctorVisitPrep,
   getDoctorVisitPrepHistory,
+  downloadDoctorVisitSummaryPdf,
   getCurrentUserEmail,
 } from "../services/api";
 
@@ -257,20 +258,25 @@ export default function DoctorVisitPrep() {
     }
   };
 
-  const downloadSummary = () => {
+  const downloadSummary = async () => {
     if (!summary) {
       return;
     }
 
-    const blob = new Blob([summary.summaryText], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `doctor-visit-summary-${today}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    try {
+      const blob = await downloadDoctorVisitSummaryPdf(USER_ID);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `doctor-visit-summary-${today}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Could not download the PDF summary.");
+    }
   };
 
   return (
@@ -612,7 +618,7 @@ export default function DoctorVisitPrep() {
           </button>
           {summary ? (
             <button type="button" className="btn-new-summary" onClick={downloadSummary}>
-              Download summary
+              Download PDF summary
             </button>
           ) : null}
         </div>

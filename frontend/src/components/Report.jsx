@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { uploadReport, getHistory, getCurrentUserEmail } from "../services/api";
+import {
+  uploadReport,
+  getHistory,
+  getCurrentUserEmail,
+  downloadPdf,
+} from "../services/api";
 
 const STORAGE_KEY = "uploadedReports";
 
@@ -200,10 +205,22 @@ export default function Report() {
     try {
       setDownloading(true);
       setError("");
-      downloadSummaryFile(file, analysisResult || { summary: insight });
+
+      const blob = await downloadPdf("/export/report/pdf", {
+        method: "POST",
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "report-simplifier.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
-      setError("Could not download the summary.");
+      setError(err.message || "Could not download the summary.");
     } finally {
       setDownloading(false);
     }
