@@ -15,7 +15,11 @@ def build_structured_response(
 
     confidence: float = 0.75,
 
-    insights: Optional[list] = None
+    insights: Optional[list] = None,
+
+    biomarker_table: Optional[list] = None,
+
+    health_score: Optional[int] = None
 ):
 
     # =========================

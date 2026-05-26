@@ -151,6 +151,7 @@ export default function HealthReflection() {
     try {
       const blob = await downloadPdf("/export/vitals/pdf", {
         method: "POST",
+        body: analysisResult,
       });
 
       const url = URL.createObjectURL(blob);

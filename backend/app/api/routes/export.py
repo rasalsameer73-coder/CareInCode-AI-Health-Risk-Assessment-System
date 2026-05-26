@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 from fastapi.responses import FileResponse
 
 from app.export.export_service import (
@@ -131,9 +131,10 @@ async def export_report_json():
 # =========================
 
 @router.post("/vitals/pdf")
-async def export_vitals_pdf():
+async def export_vitals_pdf(analysis_data: dict | None = Body(default=None)):
 
-    analysis_data = get_vitals_analysis()
+    if analysis_data is None:
+        analysis_data = get_vitals_analysis()
 
     if not analysis_data:
 
