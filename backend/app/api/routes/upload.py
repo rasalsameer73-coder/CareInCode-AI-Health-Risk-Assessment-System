@@ -950,6 +950,9 @@ async def upload_report(
     analysis["graph_data"] = graph_data
     analysis["report_type"] = report_type.upper()
 
+# VERY IMPORTANT
+    analysis["biomarkers"] = biomarkers
+    
     analysis["disclaimer"] = (
         "Educational information only. "
         "Not a medical diagnosis."
