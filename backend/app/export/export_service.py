@@ -145,10 +145,22 @@ def export_pdf(
     # HEALTH SCORE
     # =========================
 
-    health_score = data.get(
-        "health_score",
-        0
-    )
+    health_score = data.get("health_score")
+    if health_score is None:
+        risk_indicators = data.get("risk_indicators", [])
+        if not risk_indicators:
+            health_score = 98
+        else:
+            score = 100
+            for risk in risk_indicators:
+                severity = risk.get("severity", "low")
+                if severity == "high":
+                    score -= 25
+                elif severity == "moderate":
+                    score -= 12
+                elif severity == "low":
+                    score -= 5
+            health_score = max(0, score)
 
     risk_level = data.get(
         "risk_level",

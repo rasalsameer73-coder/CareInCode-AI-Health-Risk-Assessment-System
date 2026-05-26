@@ -11,6 +11,27 @@ function formatIST(timestamp) {
   });
 }
 
+function computeHealthScore(analysis) {
+  if (analysis?.health_score !== undefined && analysis?.health_score !== null) {
+    return analysis.health_score;
+  }
+
+  const risks = analysis?.risk_indicators || [];
+  if (!risks.length) {
+    return 98;
+  }
+
+  let score = 100;
+  for (const risk of risks) {
+    const severity = (risk?.severity || "low").toLowerCase();
+    if (severity === "high") score -= 25;
+    else if (severity === "moderate") score -= 12;
+    else if (severity === "low") score -= 5;
+  }
+
+  return Math.max(0, score);
+}
+
 const INITIAL_VITALS = {
   spO2: "",
   systolic: "",
@@ -350,12 +371,16 @@ export default function HealthReflection() {
                   <strong>Risk Level</strong>
                   <span>{analysisResult.risk_level?.toUpperCase() || "N/A"}</span>
                 </div>
+                <div className="reflection-report-summary">
+                  <strong>Health Score</strong>
+                  <span>{computeHealthScore(analysisResult)}</span>
+                </div>
                 {analysisResult.risk_indicators?.length ? (
                   <div className="reflection-report-section">
                     <h4>Risk Indicators</h4>
                     <ul>
                       {analysisResult.risk_indicators.map((item, idx) => (
-                        <li key={idx}>{`${item.type} (${item.severity})`}</li>
+                        <li key={idx}>{`${item.type || item.indicator || "Unknown"} (${item.severity})`}</li>
                       ))}
                     </ul>
                   </div>

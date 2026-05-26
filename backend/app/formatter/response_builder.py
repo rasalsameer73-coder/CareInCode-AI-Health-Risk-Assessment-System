@@ -1,6 +1,32 @@
 from typing import Optional
 
 
+def _resolve_health_score(
+    health_score: Optional[int],
+    risk_indicators: list
+):
+    if health_score is not None:
+        return health_score
+
+    if not risk_indicators:
+        return 98
+
+    score = 100
+    for risk in risk_indicators:
+        severity = risk.get(
+            "severity",
+            "low"
+        )
+        if severity == "high":
+            score -= 25
+        elif severity == "moderate":
+            score -= 12
+        elif severity == "low":
+            score -= 5
+
+    return max(0, score)
+
+
 def build_structured_response(
 
     summary: str,
@@ -58,9 +84,10 @@ def build_structured_response(
 
         biomarker_table = []
 
-    if health_score is None:
-
-        health_score = 0
+    health_score = _resolve_health_score(
+        health_score,
+        risk_indicators
+    )
 
     if not next_steps:
 
