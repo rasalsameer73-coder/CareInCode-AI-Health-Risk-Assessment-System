@@ -15,7 +15,7 @@ function computeHealthScore(analysis) {
   const explicitScore = analysis?.health_score;
   const risks = analysis?.risk_indicators || [];
 
-  if (explicitScore !== undefined && explicitScore !== null && !(explicitScore === 0 && risks.length)) {
+  if (explicitScore !== undefined && explicitScore !== null) {
     return explicitScore;
   }
   if (!risks.length) {
