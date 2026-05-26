@@ -62,6 +62,9 @@ def export_pdf(
 
     styles = getSampleStyleSheet()
 
+    if isinstance(data, dict) and "analysis" in data and isinstance(data["analysis"], dict):
+        data = data["analysis"]
+
     elements = []
 
     # =========================

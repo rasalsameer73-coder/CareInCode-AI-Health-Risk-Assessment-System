@@ -742,7 +742,7 @@ export default function DoctorVisitPrep() {
                 <article key={record._id} className="history-record-card">
                   <div className="history-record-header">
                     <strong>{record.summary?.headline || "Saved preparation"}</strong>
-                    <span>{record.created_at ? new Date(record.created_at).toLocaleString() : "Unknown date"}</span>
+                    <span>{formatIST(record.created_at)}</span>
                   </div>
                   <div className="history-record-values">
                     <span>Medications: {record.medications?.length ?? 0}</span>

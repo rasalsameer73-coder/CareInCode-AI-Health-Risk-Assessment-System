@@ -158,8 +158,6 @@ def process_vitals(
     # SAVE FOR EXPORTS
     # =========================
 
-    save_vitals_analysis({
-        "analysis": response
-    })
+    save_vitals_analysis(response)
 
     return response
