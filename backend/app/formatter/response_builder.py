@@ -54,6 +54,14 @@ def build_structured_response(
             "Are additional tests recommended?"
         ]
 
+    if biomarker_table is None:
+
+        biomarker_table = []
+
+    if health_score is None:
+
+        health_score = 0
+
     if not next_steps:
 
         next_steps = [
@@ -128,6 +136,12 @@ def build_structured_response(
 
         "next_steps":
             next_steps,
+
+        "health_score":
+            health_score,
+
+        "biomarker_table":
+            biomarker_table,
 
         "confidence":
             confidence,
