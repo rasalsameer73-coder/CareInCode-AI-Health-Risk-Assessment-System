@@ -146,8 +146,8 @@ def export_pdf(
     # =========================
 
     health_score = data.get("health_score")
-    if health_score is None:
-        risk_indicators = data.get("risk_indicators", [])
+    risk_indicators = data.get("risk_indicators", [])
+    if health_score is None or (health_score == 0 and risk_indicators):
         if not risk_indicators:
             health_score = 98
         else:

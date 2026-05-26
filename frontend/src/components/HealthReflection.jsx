@@ -12,11 +12,12 @@ function formatIST(timestamp) {
 }
 
 function computeHealthScore(analysis) {
-  if (analysis?.health_score !== undefined && analysis?.health_score !== null) {
-    return analysis.health_score;
-  }
-
+  const explicitScore = analysis?.health_score;
   const risks = analysis?.risk_indicators || [];
+
+  if (explicitScore !== undefined && explicitScore !== null && !(explicitScore === 0 && risks.length)) {
+    return explicitScore;
+  }
   if (!risks.length) {
     return 98;
   }
