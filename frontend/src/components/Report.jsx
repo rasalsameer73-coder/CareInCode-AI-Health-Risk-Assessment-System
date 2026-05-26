@@ -8,6 +8,14 @@ import {
   downloadPdf,
 } from "../services/api";
 
+function formatIST(timestamp) {
+  if (!timestamp) return "Unknown date";
+  return new Date(timestamp).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour12: false,
+  });
+}
+
 const STORAGE_KEY = "uploadedReports";
 
 function saveUploadedReport(file, summary) {
@@ -370,7 +378,7 @@ export default function Report() {
                         <article key={record._id} className="history-record-card">
                           <div className="history-record-header">
                             <strong>{record.file_name || record.analysis?.report_type || "Saved report"}</strong>
-                            <span>{record.created_at ? new Date(record.created_at).toLocaleString() : "Unknown date"}</span>
+                            <span>{formatIST(record.created_at)}</span>
                           </div>
                           <div className="history-record-values">
                             <span>{record.analysis?.report_type || "Unknown type"}</span>

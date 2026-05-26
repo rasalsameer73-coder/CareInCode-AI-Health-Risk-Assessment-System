@@ -1,7 +1,7 @@
 import json
 import os
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from reportlab.platypus import (
     SimpleDocTemplate,
@@ -86,9 +86,8 @@ def export_pdf(
     # GENERATED DATE
     # =========================
 
-    timestamp = str(
-        datetime.utcnow()
-    )
+    ist = timezone(timedelta(hours=5, minutes=30))
+    timestamp = datetime.now(tz=ist).strftime("%A, %d %B %Y %H:%M IST")
 
     elements.append(
 

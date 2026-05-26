@@ -9,6 +9,14 @@ import {
   getCurrentUserEmail,
 } from "../services/api";
 
+function formatIST(timestamp) {
+  if (!timestamp) return "Unknown date";
+  return new Date(timestamp).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour12: false,
+  });
+}
+
 const intensityLabels = {
   1: "Very mild",
   2: "Very mild",

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import app.core.database as database
 from pymongo.errors import PyMongoError
@@ -22,10 +22,11 @@ def generate_doctor_visit_summary(medications: list, symptoms: list):
         f"{symptom_count} symptom log{'s' if symptom_count != 1 else ''} recorded",
     ]
 
+    ist = timezone(timedelta(hours=5, minutes=30))
     summary_lines = [
         "Doctor Visit Preparation Summary",
         "",
-        f"Generated on: {datetime.utcnow().strftime('%A, %d %B %Y')}",
+        f"Generated on: {datetime.now(tz=ist).strftime('%A, %d %B %Y %H:%M IST')}",
         "",
         "Current medications:",
     ]

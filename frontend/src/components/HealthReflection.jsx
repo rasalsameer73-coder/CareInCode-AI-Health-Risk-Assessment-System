@@ -3,6 +3,14 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { postVitals, getVitalsHistory, getCurrentUserEmail, downloadPdf } from "../services/api";
 
+function formatIST(timestamp) {
+  if (!timestamp) return "Unknown date";
+  return new Date(timestamp).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour12: false,
+  });
+}
+
 const INITIAL_VITALS = {
   spO2: "",
   systolic: "",
@@ -310,7 +318,7 @@ export default function HealthReflection() {
                     {vitalsHistory.map((record) => (
                       <div key={record._id} className="history-record-card">
                         <div className="history-record-header">
-                          <span>{new Date(record.created_at).toLocaleString()}</span>
+                          <span>{formatIST(record.created_at)}</span>
                           <strong>{record.analysis?.summary || "Vitals review"}</strong>
                         </div>
                         <div className="history-record-values">

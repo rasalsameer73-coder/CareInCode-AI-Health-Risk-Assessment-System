@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import app.core.database as database
 from pymongo.errors import PyMongoError
@@ -18,7 +18,7 @@ def save_vitals_history(
         "user_id": user_id,
         "vitals": vitals,
         "analysis": analysis,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(tz=timezone.utc),
     }
 
     try:

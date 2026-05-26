@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import app.core.database as database
 
@@ -66,7 +66,7 @@ def save_health_record_db(
             file_name,
 
         "created_at":
-            datetime.utcnow()
+            datetime.now(tz=timezone.utc)
     }
 
     # =========================
@@ -140,5 +140,8 @@ def get_user_records(
         record["_id"] = str(
             record["_id"]
         )
+
+        if "created_at" in record and hasattr(record["created_at"], "isoformat"):
+            record["created_at"] = record["created_at"].isoformat()
 
     return records
