@@ -151,7 +151,9 @@ def process_vitals(
 
         next_steps=next_steps,
 
-        confidence=0.82
+        confidence=0.82,
+
+        insights=insights
     )
 
     # =========================
