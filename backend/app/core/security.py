@@ -6,7 +6,8 @@ from jose import jwt
 from passlib.context import CryptContext
 
 
-SECRET_KEY = "careincode_secret"
+from app.core.config import settings
+SECRET_KEY = settings.JWT_SECRET
 
 ALGORITHM = "HS256"
 

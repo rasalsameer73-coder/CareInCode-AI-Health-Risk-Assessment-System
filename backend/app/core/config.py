@@ -26,12 +26,14 @@ class Settings(BaseSettings):
         "careincode"
     )
 
-    JWT_SECRET: str = (
-        "careincode_jwt_secret"
+    JWT_SECRET: str = Field(
+        default="",
+        env="JWT_SECRET"
     )
 
-    ENCRYPTION_KEY: str = (
-        "careincode_secure_key_32"
+    ENCRYPTION_KEY: str = Field(
+        default="",
+        env="ENCRYPTION_KEY"
     )
 
     model_config = SettingsConfigDict(

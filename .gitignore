@@ -20,6 +20,7 @@ __pycache__/
 
 # Environment variables
 .env
+backend/.env
 
 # Chroma / vector DB
 chroma_db/

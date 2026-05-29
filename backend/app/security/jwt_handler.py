@@ -1,7 +1,8 @@
 from jose import jwt
 from datetime import datetime, timedelta
 
-SECRET_KEY = "supersecretkey"  # move to .env later
+from app.core.config import settings
+SECRET_KEY = settings.JWT_SECRET
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 

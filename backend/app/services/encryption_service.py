@@ -1,12 +1,11 @@
 from cryptography.fernet import Fernet
+from app.core.config import settings
 
+if not settings.ENCRYPTION_KEY:
+    raise ValueError("ENCRYPTION_KEY is not set in environment variables.")
 
-# GENERATED VALID FERNET KEY
-FERNET_KEY = b'6A9d5K9vVn8QmH2wZrX7YcP1LsT4uEiJfGhBnMqRtYs='
-
-cipher = Fernet(
-    FERNET_KEY
-)
+FERNET_KEY = settings.ENCRYPTION_KEY.encode()
+cipher = Fernet(FERNET_KEY)
 
 
 def encrypt_data(
