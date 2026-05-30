@@ -17,14 +17,16 @@ def _resolve_health_score(
             "severity",
             "low"
         )
-        if severity == "high":
-            score -= 25
+        if severity == "critical":
+            score -= 30
+        elif severity == "high":
+            score -= 20
         elif severity == "moderate":
-            score -= 12
+            score -= 10
         elif severity == "low":
             score -= 5
 
-    return max(0, score)
+    return max(40, score)
 
 
 def build_structured_response(
@@ -109,14 +111,19 @@ def build_structured_response(
             "low"
         )
 
-        if severity == "high":
+        if severity == "critical":
+
+            risk_level = "critical"
+            break
+
+        elif severity == "high" and risk_level not in ["critical"]:
 
             risk_level = "high"
             break
 
         elif (
             severity == "moderate"
-            and risk_level != "high"
+            and risk_level not in ["critical", "high"]
         ):
 
             risk_level = "moderate"

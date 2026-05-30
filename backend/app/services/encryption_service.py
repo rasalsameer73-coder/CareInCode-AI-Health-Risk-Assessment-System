@@ -4,15 +4,21 @@ from app.core.config import settings
 if not settings.ENCRYPTION_KEY:
     raise ValueError("ENCRYPTION_KEY is not set in environment variables.")
 
-FERNET_KEY = settings.ENCRYPTION_KEY.encode()
-cipher = Fernet(FERNET_KEY)
+cipher = None
+
+def _get_cipher():
+    global cipher
+    if cipher is None:
+        FERNET_KEY = settings.ENCRYPTION_KEY.encode()
+        cipher = Fernet(FERNET_KEY)
+    return cipher
 
 
 def encrypt_data(
     text: str
 ):
-
-    encrypted = cipher.encrypt(
+    cipher_obj = _get_cipher()
+    encrypted = cipher_obj.encrypt(
         text.encode()
     )
 
@@ -22,8 +28,8 @@ def encrypt_data(
 def decrypt_data(
     encrypted_text: str
 ):
-
-    decrypted = cipher.decrypt(
+    cipher_obj = _get_cipher()
+    decrypted = cipher_obj.decrypt(
         encrypted_text.encode()
     )
 

@@ -46,10 +46,12 @@ def build_biomarker_table(vitals_data, risks):
 
         status = 'Normal'
         severity = risk_map.get(key)
-        if severity == 'moderate':
-            status = 'Moderate'
+        if severity == 'critical':
+            status = 'Critical'
         elif severity == 'high':
             status = 'High'
+        elif severity == 'moderate':
+            status = 'Moderate'
 
         table.append({
             'parameter': label,
@@ -68,10 +70,12 @@ def compute_health_score(risks):
     score = 100
     for risk in risks:
         severity = risk.get('severity', 'low')
-        if severity == 'high':
-            score -= 25
+        if severity == 'critical':
+            score -= 30
+        elif severity == 'high':
+            score -= 20
         elif severity == 'moderate':
-            score -= 12
+            score -= 10
         elif severity == 'low':
             score -= 5
 

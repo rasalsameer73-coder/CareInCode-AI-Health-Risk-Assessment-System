@@ -30,9 +30,34 @@ def analyze_thyroid_biomarkers(
             f"TSH: {tsh}"
         )
 
+        # VERY HIGH TSH
+
+        if tsh > 10:
+
+            risk_indicators.append({
+
+                "type":
+                    "Severely Elevated TSH",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "TSH is significantly elevated (severe hypothyroidism)."
+            )
+
+            next_steps.append(
+                "Urgent thyroid hormone level assessment needed."
+            )
+
+            health_score -= 20
+
+            risk_level = "high"
+
         # HIGH TSH
 
-        if tsh > 4.5:
+        elif tsh > 4.5:
 
             risk_indicators.append({
 
@@ -51,9 +76,34 @@ def analyze_thyroid_biomarkers(
                 "Discuss thyroid hormone evaluation with your doctor."
             )
 
-            health_score -= 15
+            health_score -= 12
 
             risk_level = "moderate"
+
+        # VERY LOW TSH
+
+        elif tsh < 0.1:
+
+            risk_indicators.append({
+
+                "type":
+                    "Severely Low TSH",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "TSH is significantly low (severe hyperthyroidism)."
+            )
+
+            next_steps.append(
+                "Urgent thyroid assessment needed."
+            )
+
+            health_score -= 20
+
+            risk_level = "high"
 
         # LOW TSH
 
@@ -76,9 +126,10 @@ def analyze_thyroid_biomarkers(
                 "Discuss possible thyroid overactivity with your doctor."
             )
 
-            health_score -= 15
+            health_score -= 12
 
-            risk_level = "moderate"
+            if risk_level not in ["high"]:
+                risk_level = "moderate"
 
     # =========================
     # T3
@@ -94,7 +145,27 @@ def analyze_thyroid_biomarkers(
             f"T3: {t3}"
         )
 
-        if t3 < 0.8:
+        if t3 < 0.5:
+
+            risk_indicators.append({
+
+                "type":
+                    "Severely Low T3",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "T3 is significantly low (severe hypothyroidism)."
+            )
+
+            health_score -= 18
+
+            if risk_level not in ["high"]:
+                risk_level = "high"
+
+        elif t3 < 0.8:
 
             risk_indicators.append({
 
@@ -109,7 +180,30 @@ def analyze_thyroid_biomarkers(
                 "T3 appears lower than common reference ranges."
             )
 
-            health_score -= 8
+            health_score -= 10
+
+            if risk_level not in ["high"]:
+                risk_level = "moderate"
+
+        elif t3 > 2.5:
+
+            risk_indicators.append({
+
+                "type":
+                    "Severely High T3",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "T3 is significantly elevated (hyperthyroidism)."
+            )
+
+            health_score -= 18
+
+            if risk_level not in ["high"]:
+                risk_level = "high"
 
         elif t3 > 2.0:
 
@@ -126,7 +220,10 @@ def analyze_thyroid_biomarkers(
                 "T3 appears elevated."
             )
 
-            health_score -= 8
+            health_score -= 10
+
+            if risk_level not in ["high"]:
+                risk_level = "moderate"
 
     # =========================
     # T4
@@ -142,7 +239,27 @@ def analyze_thyroid_biomarkers(
             f"T4: {t4}"
         )
 
-        if t4 < 4.5:
+        if t4 < 3:
+
+            risk_indicators.append({
+
+                "type":
+                    "Severely Low T4",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "T4 is significantly low (severe hypothyroidism)."
+            )
+
+            health_score -= 18
+
+            if risk_level not in ["high"]:
+                risk_level = "high"
+
+        elif t4 < 4.5:
 
             risk_indicators.append({
 
@@ -157,7 +274,30 @@ def analyze_thyroid_biomarkers(
                 "T4 appears lower than common reference ranges."
             )
 
-            health_score -= 8
+            health_score -= 10
+
+            if risk_level not in ["high"]:
+                risk_level = "moderate"
+
+        elif t4 > 15:
+
+            risk_indicators.append({
+
+                "type":
+                    "Severely High T4",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "T4 is significantly elevated (hyperthyroidism)."
+            )
+
+            health_score -= 18
+
+            if risk_level not in ["high"]:
+                risk_level = "high"
 
         elif t4 > 12.0:
 
@@ -174,7 +314,38 @@ def analyze_thyroid_biomarkers(
                 "T4 appears elevated."
             )
 
-            health_score -= 8
+            health_score -= 10
+
+            if risk_level not in ["high"]:
+                risk_level = "moderate"
+
+    # =========================
+    # DETERMINE FINAL RISK LEVEL
+    # =========================
+
+    final_risk_level = "low"
+
+    for risk in risk_indicators:
+
+        severity = risk.get(
+            "severity",
+            "low"
+        )
+
+        if severity == "critical":
+
+            final_risk_level = "critical"
+            break
+
+        elif severity == "high" and final_risk_level != "critical":
+
+            final_risk_level = "high"
+
+        elif severity == "moderate" and final_risk_level not in ["critical", "high"]:
+
+            final_risk_level = "moderate"
+
+    risk_level = final_risk_level
 
     # =========================
     # DOCTOR QUESTIONS

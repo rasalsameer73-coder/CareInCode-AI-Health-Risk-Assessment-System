@@ -30,7 +30,53 @@ def analyze_diabetes_biomarkers(
             f"HbA1c: {hba1c}"
         )
 
-        if hba1c >= 6.5:
+        if hba1c >= 9:
+
+            risk_indicators.append({
+
+                "type":
+                    "Critical Elevated HbA1c",
+
+                "severity":
+                    "critical"
+            })
+
+            insights.append(
+                "HbA1c is critically elevated (poor diabetes control)."
+            )
+
+            next_steps.append(
+                "Seek immediate diabetes management review."
+            )
+
+            health_score -= 30
+
+            risk_level = "critical"
+
+        elif hba1c >= 8:
+
+            risk_indicators.append({
+
+                "type":
+                    "Severely Elevated HbA1c",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "HbA1c is significantly elevated (suboptimal diabetes control)."
+            )
+
+            next_steps.append(
+                "Discuss blood sugar management intensification with your doctor."
+            )
+
+            health_score -= 25
+
+            risk_level = "high"
+
+        elif hba1c >= 6.5:
 
             risk_indicators.append({
 
@@ -38,20 +84,20 @@ def analyze_diabetes_biomarkers(
                     "Elevated HbA1c",
 
                 "severity":
-                    "high"
+                    "moderate"
             })
 
             insights.append(
-                "HbA1c levels are elevated."
+                "HbA1c levels indicate diabetes."
             )
 
             next_steps.append(
                 "Discuss blood sugar management with your doctor."
             )
 
-            health_score -= 20
+            health_score -= 15
 
-            risk_level = "high"
+            risk_level = "moderate"
 
         elif hba1c >= 5.7:
 
@@ -61,7 +107,7 @@ def analyze_diabetes_biomarkers(
                     "Prediabetes Range HbA1c",
 
                 "severity":
-                    "moderate"
+                    "low"
             })
 
             insights.append(
@@ -72,9 +118,10 @@ def analyze_diabetes_biomarkers(
                 "Monitor blood sugar and lifestyle habits."
             )
 
-            health_score -= 10
+            health_score -= 8
 
-            risk_level = "moderate"
+            if risk_level == "low":
+                risk_level = "low"
 
     # =========================
     # FASTING GLUCOSE
@@ -90,7 +137,30 @@ def analyze_diabetes_biomarkers(
             f"Fasting Glucose: {fasting_glucose}"
         )
 
-        if fasting_glucose >= 126:
+        if fasting_glucose >= 200:
+
+            risk_indicators.append({
+
+                "type":
+                    "Critical Elevated Fasting Glucose",
+
+                "severity":
+                    "critical"
+            })
+
+            insights.append(
+                "Fasting glucose is critically elevated."
+            )
+
+            next_steps.append(
+                "Seek urgent diabetes/endocrine assessment."
+            )
+
+            health_score -= 30
+
+            risk_level = "critical"
+
+        elif fasting_glucose >= 126:
 
             risk_indicators.append({
 
@@ -102,14 +172,14 @@ def analyze_diabetes_biomarkers(
             })
 
             insights.append(
-                "Fasting glucose appears elevated."
+                "Fasting glucose is significantly elevated (diabetes range)."
             )
 
             next_steps.append(
                 "Discuss fasting glucose levels with your doctor."
             )
 
-            health_score -= 15
+            health_score -= 20
 
             risk_level = "high"
 
@@ -121,11 +191,11 @@ def analyze_diabetes_biomarkers(
                     "Borderline Fasting Glucose",
 
                 "severity":
-                    "moderate"
+                    "low"
             })
 
             insights.append(
-                "Fasting glucose is mildly elevated."
+                "Fasting glucose is mildly elevated (impaired fasting glucose)."
             )
 
             health_score -= 8
@@ -200,12 +270,36 @@ def analyze_diabetes_biomarkers(
     ])
 
     # =========================
-    # MINIMUM SCORE
+    # DETERMINE FINAL RISK LEVEL
     # =========================
 
-    if health_score < 0:
+    final_risk_level = "low"
 
-        health_score = 0
+    for risk in risk_indicators:
+
+        severity = risk.get(
+            "severity",
+            "low"
+        )
+
+        if severity == "critical":
+
+            final_risk_level = "critical"
+            break
+
+        elif severity == "high" and final_risk_level != "critical":
+
+            final_risk_level = "high"
+
+        elif severity == "moderate" and final_risk_level not in ["critical", "high"]:
+
+            final_risk_level = "moderate"
+
+        elif severity == "low" and final_risk_level == "low":
+
+            final_risk_level = "low"
+
+    risk_level = final_risk_level
 
     # =========================
     # SUMMARY

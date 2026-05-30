@@ -30,7 +30,30 @@ def analyze_lipid_biomarkers(
             f"Total Cholesterol: {cholesterol}"
         )
 
-        if cholesterol >= 240:
+        if cholesterol >= 300:
+
+            risk_indicators.append({
+
+                "type":
+                    "Critical Cholesterol",
+
+                "severity":
+                    "critical"
+            })
+
+            insights.append(
+                "Total cholesterol is critically elevated."
+            )
+
+            next_steps.append(
+                "Seek urgent cardiovascular risk assessment."
+            )
+
+            health_score -= 30
+
+            risk_level = "critical"
+
+        elif cholesterol >= 240:
 
             risk_indicators.append({
 
@@ -61,7 +84,7 @@ def analyze_lipid_biomarkers(
                     "Borderline High Cholesterol",
 
                 "severity":
-                    "moderate"
+                    "low"
             })
 
             insights.append(
@@ -72,9 +95,10 @@ def analyze_lipid_biomarkers(
                 "Monitor cholesterol and lifestyle factors."
             )
 
-            health_score -= 10
+            health_score -= 8
 
-            risk_level = "moderate"
+            if risk_level == "low":
+                risk_level = "low"
 
     # =========================
     # LDL
@@ -90,7 +114,30 @@ def analyze_lipid_biomarkers(
             f"LDL: {ldl}"
         )
 
-        if ldl >= 160:
+        if ldl >= 190:
+
+            risk_indicators.append({
+
+                "type":
+                    "Critical LDL",
+
+                "severity":
+                    "critical"
+            })
+
+            insights.append(
+                "LDL cholesterol is critically elevated (very high cardiovascular risk)."
+            )
+
+            next_steps.append(
+                "Seek urgent cardiovascular evaluation."
+            )
+
+            health_score -= 30
+
+            risk_level = "critical"
+
+        elif ldl >= 160:
 
             risk_indicators.append({
 
@@ -102,14 +149,14 @@ def analyze_lipid_biomarkers(
             })
 
             insights.append(
-                "LDL cholesterol is elevated."
+                "LDL cholesterol is significantly elevated."
             )
 
             next_steps.append(
                 "Consider discussing cardiovascular risk factors."
             )
 
-            health_score -= 15
+            health_score -= 18
 
             risk_level = "high"
 
@@ -121,7 +168,7 @@ def analyze_lipid_biomarkers(
                     "Borderline LDL",
 
                 "severity":
-                    "moderate"
+                    "low"
             })
 
             insights.append(
@@ -144,7 +191,30 @@ def analyze_lipid_biomarkers(
             f"HDL: {hdl}"
         )
 
-        if hdl < 40:
+        if hdl < 30:
+
+            risk_indicators.append({
+
+                "type":
+                    "Critically Low HDL",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "HDL cholesterol is significantly low (high cardiovascular risk)."
+            )
+
+            next_steps.append(
+                "Urgent cardiovascular risk assessment needed."
+            )
+
+            health_score -= 20
+
+            risk_level = "high"
+
+        elif hdl < 40:
 
             risk_indicators.append({
 
@@ -163,9 +233,10 @@ def analyze_lipid_biomarkers(
                 "Discuss heart health and exercise habits."
             )
 
-            health_score -= 10
+            health_score -= 12
 
-            risk_level = "moderate"
+            if risk_level not in ["critical", "high"]:
+                risk_level = "moderate"
 
     # =========================
     # TRIGLYCERIDES
@@ -181,7 +252,30 @@ def analyze_lipid_biomarkers(
             f"Triglycerides: {triglycerides}"
         )
 
-        if triglycerides >= 200:
+        if triglycerides >= 500:
+
+            risk_indicators.append({
+
+                "type":
+                    "Critical Triglycerides",
+
+                "severity":
+                    "critical"
+            })
+
+            insights.append(
+                "Triglyceride levels are critically elevated (pancreatitis risk)."
+            )
+
+            next_steps.append(
+                "Seek urgent assessment for triglyceride management."
+            )
+
+            health_score -= 30
+
+            risk_level = "critical"
+
+        elif triglycerides >= 200:
 
             risk_indicators.append({
 
@@ -200,9 +294,10 @@ def analyze_lipid_biomarkers(
                 "Discuss dietary and metabolic risk factors."
             )
 
-            health_score -= 15
+            health_score -= 18
 
-            risk_level = "high"
+            if risk_level not in ["critical"]:
+                risk_level = "high"
 
         elif triglycerides >= 150:
 
@@ -212,7 +307,7 @@ def analyze_lipid_biomarkers(
                     "Borderline Triglycerides",
 
                 "severity":
-                    "moderate"
+                    "low"
             })
 
             insights.append(
@@ -220,6 +315,41 @@ def analyze_lipid_biomarkers(
             )
 
             health_score -= 8
+
+            if risk_level == "low":
+                risk_level = "low"
+
+    # =========================
+    # DETERMINE FINAL RISK LEVEL
+    # =========================
+
+    final_risk_level = "low"
+
+    for risk in risk_indicators:
+
+        severity = risk.get(
+            "severity",
+            "low"
+        )
+
+        if severity == "critical":
+
+            final_risk_level = "critical"
+            break
+
+        elif severity == "high" and final_risk_level != "critical":
+
+            final_risk_level = "high"
+
+        elif severity == "moderate" and final_risk_level not in ["critical", "high"]:
+
+            final_risk_level = "moderate"
+
+        elif severity == "low" and final_risk_level == "low":
+
+            final_risk_level = "low"
+
+    risk_level = final_risk_level
 
     # =========================
     # DOCTOR QUESTIONS

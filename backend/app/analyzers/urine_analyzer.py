@@ -30,7 +30,30 @@ def analyze_urine_biomarkers(
             f"Protein: {protein}"
         )
 
-        if protein > 15:
+        if protein > 100:
+
+            risk_indicators.append({
+
+                "type":
+                    "Critically Elevated Urine Protein",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "Protein is significantly elevated in urine (proteinuria)."
+            )
+
+            next_steps.append(
+                "Urgent kidney function assessment needed."
+            )
+
+            health_score -= 22
+
+            risk_level = "high"
+
+        elif protein > 15:
 
             risk_indicators.append({
 
@@ -67,7 +90,30 @@ def analyze_urine_biomarkers(
             f"Ketones: {ketones}"
         )
 
-        if ketones > 3:
+        if ketones > 10:
+
+            risk_indicators.append({
+
+                "type":
+                    "Critically Elevated Ketones",
+
+                "severity":
+                    "critical"
+            })
+
+            insights.append(
+                "Ketones are critically elevated (risk of ketoacidosis)."
+            )
+
+            next_steps.append(
+                "Seek immediate medical evaluation."
+            )
+
+            health_score -= 30
+
+            risk_level = "critical"
+
+        elif ketones > 3:
 
             risk_indicators.append({
 
@@ -86,7 +132,10 @@ def analyze_urine_biomarkers(
                 "Discuss possible metabolic causes with your doctor."
             )
 
-            health_score -= 10
+            health_score -= 12
+
+            if risk_level not in ["critical"]:
+                risk_level = "moderate"
 
     # =========================
     # PUS CELLS
@@ -102,7 +151,31 @@ def analyze_urine_biomarkers(
             f"Pus Cells: {pus_cells}"
         )
 
-        if pus_cells > 5:
+        if pus_cells > 15:
+
+            risk_indicators.append({
+
+                "type":
+                    "Severely Elevated Pus Cells",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "Pus cells are significantly elevated (serious infection)."
+            )
+
+            next_steps.append(
+                "Urgent urinary tract evaluation needed."
+            )
+
+            health_score -= 22
+
+            if risk_level not in ["critical"]:
+                risk_level = "high"
+
+        elif pus_cells > 5:
 
             risk_indicators.append({
 
@@ -123,7 +196,36 @@ def analyze_urine_biomarkers(
 
             health_score -= 15
 
-            risk_level = "moderate"
+            if risk_level not in ["critical", "high"]:
+                risk_level = "moderate"
+
+    # =========================
+    # DETERMINE FINAL RISK LEVEL
+    # =========================
+
+    final_risk_level = "low"
+
+    for risk in risk_indicators:
+
+        severity = risk.get(
+            "severity",
+            "low"
+        )
+
+        if severity == "critical":
+
+            final_risk_level = "critical"
+            break
+
+        elif severity == "high" and final_risk_level != "critical":
+
+            final_risk_level = "high"
+
+        elif severity == "moderate" and final_risk_level not in ["critical", "high"]:
+
+            final_risk_level = "moderate"
+
+    risk_level = final_risk_level
 
     # =========================
     # DOCTOR QUESTIONS

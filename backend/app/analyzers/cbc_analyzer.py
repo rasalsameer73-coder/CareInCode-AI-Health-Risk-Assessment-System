@@ -28,7 +28,47 @@ def analyze_cbc_biomarkers(
             f"Hemoglobin: {hemoglobin}"
         )
 
-        if hemoglobin < 13:
+        if hemoglobin < 7:
+
+            risks.append({
+
+                "type":
+                    "Critical Low Hemoglobin",
+
+                "severity":
+                    "critical",
+
+                "reason":
+                    "Hemoglobin critically low. Seek immediate medical attention."
+            })
+
+            insights.append(
+                "Hemoglobin is critically low (severe anemia)."
+            )
+
+            health_score -= 30
+
+        elif hemoglobin < 10:
+
+            risks.append({
+
+                "type":
+                    "Severe Low Hemoglobin",
+
+                "severity":
+                    "high",
+
+                "reason":
+                    "Hemoglobin is significantly below reference ranges."
+            })
+
+            insights.append(
+                "Hemoglobin is significantly low (severe anemia)."
+            )
+
+            health_score -= 20
+
+        elif hemoglobin < 13:
 
             risks.append({
 
@@ -46,20 +86,7 @@ def analyze_cbc_biomarkers(
                 "Hemoglobin levels appear lower than expected."
             )
 
-            doctor_questions.extend([
-
-                "Could this indicate anemia?",
-
-                "Should iron studies be performed?",
-
-                "Would vitamin B12 or folate testing help?"
-            ])
-
-            next_steps.append(
-                "Discuss low hemoglobin findings with your doctor."
-            )
-
-            health_score -= 15
+            health_score -= 12
 
         else:
 
@@ -81,7 +108,27 @@ def analyze_cbc_biomarkers(
             f"WBC: {wbc}"
         )
 
-        if wbc > 11000:
+        if wbc > 15000:
+
+            risks.append({
+
+                "type":
+                    "Severely Elevated WBC",
+
+                "severity":
+                    "high",
+
+                "reason":
+                    "White blood cell count is significantly elevated."
+            })
+
+            insights.append(
+                "WBC is significantly elevated (severe infection/inflammation)."
+            )
+
+            health_score -= 18
+
+        elif wbc > 11000:
 
             risks.append({
 
@@ -99,11 +146,27 @@ def analyze_cbc_biomarkers(
                 "Elevated WBC may reflect inflammation or infection."
             )
 
-            next_steps.append(
-                "Monitor for signs of infection or inflammation."
+            health_score -= 10
+
+        elif wbc < 3000:
+
+            risks.append({
+
+                "type":
+                    "Severely Low WBC",
+
+                "severity":
+                    "high",
+
+                "reason":
+                    "White blood cell count is critically low."
+            })
+
+            insights.append(
+                "Low WBC is significantly below normal (immune compromise)."
             )
 
-            health_score -= 10
+            health_score -= 18
 
         elif wbc < 4000:
 
@@ -139,7 +202,47 @@ def analyze_cbc_biomarkers(
             f"Platelets: {platelets}"
         )
 
-        if platelets < 150000:
+        if platelets < 20000:
+
+            risks.append({
+
+                "type":
+                    "Critical Low Platelets",
+
+                "severity":
+                    "critical",
+
+                "reason":
+                    "Platelet count is critically low (bleeding risk)."
+            })
+
+            insights.append(
+                "Platelets are critically low. Seek immediate medical attention."
+            )
+
+            health_score -= 30
+
+        elif platelets < 50000:
+
+            risks.append({
+
+                "type":
+                    "Severely Low Platelets",
+
+                "severity":
+                    "high",
+
+                "reason":
+                    "Platelet count is significantly below reference ranges."
+            })
+
+            insights.append(
+                "Platelet count is significantly low (thrombocytopenia)."
+            )
+
+            health_score -= 20
+
+        elif platelets < 150000:
 
             risks.append({
 
@@ -155,10 +258,6 @@ def analyze_cbc_biomarkers(
 
             insights.append(
                 "Platelet levels are lower than expected."
-            )
-
-            next_steps.append(
-                "Discuss platelet levels with your healthcare provider."
             )
 
             health_score -= 10
@@ -210,12 +309,16 @@ def analyze_cbc_biomarkers(
             "low"
         )
 
-        if severity == "high":
+        if severity == "critical":
 
-            risk_level = "high"
+            risk_level = "critical"
             break
 
-        elif severity == "moderate":
+        elif severity == "high" and risk_level != "critical":
+
+            risk_level = "high"
+
+        elif severity == "moderate" and risk_level not in ["critical", "high"]:
 
             risk_level = "moderate"
 

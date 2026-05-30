@@ -30,7 +30,53 @@ def analyze_liver_biomarkers(
             f"ALT: {alt}"
         )
 
-        if alt > 55:
+        if alt > 200:
+
+            risk_indicators.append({
+
+                "type":
+                    "Critical Elevated ALT",
+
+                "severity":
+                    "critical"
+            })
+
+            insights.append(
+                "ALT is critically elevated (severe liver injury)."
+            )
+
+            next_steps.append(
+                "Seek immediate hepatology evaluation."
+            )
+
+            health_score -= 30
+
+            risk_level = "critical"
+
+        elif alt > 100:
+
+            risk_indicators.append({
+
+                "type":
+                    "Severely Elevated ALT",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "ALT is significantly elevated (liver dysfunction)."
+            )
+
+            next_steps.append(
+                "Urgent liver function assessment needed."
+            )
+
+            health_score -= 20
+
+            risk_level = "high"
+
+        elif alt > 55:
 
             risk_indicators.append({
 
@@ -49,7 +95,7 @@ def analyze_liver_biomarkers(
                 "Discuss liver enzyme evaluation with your doctor."
             )
 
-            health_score -= 15
+            health_score -= 12
 
             risk_level = "moderate"
 
@@ -67,7 +113,45 @@ def analyze_liver_biomarkers(
             f"AST: {ast}"
         )
 
-        if ast > 45:
+        if ast > 200:
+
+            risk_indicators.append({
+
+                "type":
+                    "Critical Elevated AST",
+
+                "severity":
+                    "critical"
+            })
+
+            insights.append(
+                "AST is critically elevated (severe liver injury)."
+            )
+
+            health_score -= 30
+
+            risk_level = "critical"
+
+        elif ast > 100:
+
+            risk_indicators.append({
+
+                "type":
+                    "Severely Elevated AST",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "AST is significantly elevated (liver dysfunction)."
+            )
+
+            health_score -= 20
+
+            risk_level = "high"
+
+        elif ast > 45:
 
             risk_indicators.append({
 
@@ -84,6 +168,9 @@ def analyze_liver_biomarkers(
 
             health_score -= 12
 
+            if risk_level not in ["critical", "high"]:
+                risk_level = "moderate"
+
     # =========================
     # BILIRUBIN
     # =========================
@@ -98,7 +185,30 @@ def analyze_liver_biomarkers(
             f"Bilirubin: {bilirubin}"
         )
 
-        if bilirubin > 1.2:
+        if bilirubin > 3.0:
+
+            risk_indicators.append({
+
+                "type":
+                    "Critical Elevated Bilirubin",
+
+                "severity":
+                    "high"
+            })
+
+            insights.append(
+                "Bilirubin is significantly elevated (severe jaundice)."
+            )
+
+            next_steps.append(
+                "Urgent assessment needed for bilirubin levels."
+            )
+
+            health_score -= 20
+
+            risk_level = "high"
+
+        elif bilirubin > 1.2:
 
             risk_indicators.append({
 
@@ -118,6 +228,37 @@ def analyze_liver_biomarkers(
             )
 
             health_score -= 12
+
+            if risk_level not in ["critical", "high"]:
+                risk_level = "moderate"
+
+    # =========================
+    # DETERMINE FINAL RISK LEVEL
+    # =========================
+
+    final_risk_level = "low"
+
+    for risk in risk_indicators:
+
+        severity = risk.get(
+            "severity",
+            "low"
+        )
+
+        if severity == "critical":
+
+            final_risk_level = "critical"
+            break
+
+        elif severity == "high" and final_risk_level != "critical":
+
+            final_risk_level = "high"
+
+        elif severity == "moderate" and final_risk_level not in ["critical", "high"]:
+
+            final_risk_level = "moderate"
+
+    risk_level = final_risk_level
 
     # =========================
     # DOCTOR QUESTIONS
